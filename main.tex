@@ -1,6 +1,10 @@
 \documentclass[11pt]{article}
+
+% Packages
 \usepackage{graphicx} % Required for inserting images
 \usepackage{blindtext}
+\usepackage{mathtools}
+\usepackage{amsmath}
 \usepackage{geometry}
  \geometry{
      a4paper,
@@ -8,6 +12,9 @@
      left=20mm,
      top=20mm,
  }
+
+ %% Commands
+ \newcommand{\leftsuperscript}[3]{ {}^{#1}{#2}_{#3} }
  
 \title{Passive Walker Analysis}
 \author{Lorenzo Conti}
@@ -20,10 +27,54 @@
 A brief introduction to passive walking and the aim of this article. 
 
 \section*{Model setup}
-Here I describe the structure of the passive walker, of the system and the frames placed on the model.
+\begin{flushleft}
+%% Description of the setup of the model, such as: link and joint structure, model parameters, generalised coordinates, system.
+
+The proposed model consists of a single passive pin joint at the hip, two legs attached to the latter, each with a point mass at a certain distance from the joint, and two foot links at the end of the legs. The feet are carved from a geometrical shape centered at the hip joint, such as a sphere to start with. The figure below shows such setup:
+
+%[Figure]
+
+The passive walker ought to walk on a flat surface inclined by an angle $\gamma$, so that its motion is driven by gravity and is halted by the friction and collisions of the swing leg against the ground at foot strike. Because of the inclination of the plane, we start by defining two global reference frames around which the robot walks: a world frame and a ground frame. The ground frame is built into the terrain and is thus tilted by the angle $\gamma$ with respect to the world frame.
+
+The analysis of the walker consists of two sets of equations: one for the unit step, or single-stance, and one for the collision of the swing leg with the terrain. The unit step is the time period between two foot strikes, and is the sequence of values that is looked to be repeated perpetually. 
+
+Each robot link can be described with a proper homogeneous transformation starting from a base frame placed in the hip joint, that rotates together with the stance leg and the imaginary sphere
+:
+\begin{equation}
+    \leftsuperscript{W}{H}{L} = 
+    \left[\begin{array}{cccc}
+    \leftsuperscript{L[W]}{R}{L}(\theta_1) & \leftsuperscript{W}{p}{L}	\\
+    0 & 1 
+    \end{array}\right],
+\end{equation}
+where \[ \leftsuperscript{0}{p}{L} = \begin{pmatrix}x\\y\end{pmatrix} \] is the position of the point mass at the hip joint. 
+The fact that both feet are extracted from a sphere centred at the hip makes a frame placed at the contact point inertial with the base frame, at a constant distance $r$, which is the radius of the sphere. In other words:
+
+\begin{equation}
+    \leftsuperscript{L}{H}{C_1} = 
+    \left[\begin{array}{cccc}
+    \leftsuperscript{C_1[W]}{R}{L}(\theta_1) & \leftsuperscript{L}{p}{C_1}	\\
+    0 & 1 
+    \end{array}\right],\qquad \leftsuperscript{L}{p}{C_1} = \begin{pmatrix}0 \\  -r\end{pmatrix}
+\end{equation}
+
+
+\end{flushleft}
+
 
 \section*{Model mathematics}
-Here I retrieve the equations of motion for the model.
+%% Calculation of the equations of motion for the model.
+
+\subsection*{Equations for single stance}
+Let us consider the generalised coordinates of the system to be:
+\begin{equation}
+    z = \begin{pmatrix}x\\y\\ \theta_1 \\ \theta2 \end{pmatrix},
+\end{equation}
+where $\theta_1$ and $\theta_2$ are the angles of the legs as showed in figure [n].
+
+The equations of motion 
+
+\subsection*{Equations for footstrike}
 
 \section*{Code}
 Here I display snippets of Matlab code.
