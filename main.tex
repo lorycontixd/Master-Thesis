@@ -34,7 +34,7 @@ A brief introduction to passive walking and the aim of this article.
 \begin{flushleft}
 %% Description of the setup of the model, such as: link and joint structure, model parameters, generalised coordinates, system.
 
-The proposed model consists of a single passive pin joint located at the hip where a point mass $m_H$ is placed, two legs attached to the latter, each with a point mass $m_l$ at a certain distance $l$ from the joint, and two foot links of mass $m_f$ at the end of the legs. The feet are carved from a geometrical shape centered at the hip joint, such as a sphere to start with. $\theta_1$ ad $\theta_2$ are the angles made by the biped legs with the vertical (counterclockwise positive). The figure below shows such setup:
+The proposed model consists of a single passive pin joint located at the hip where a point mass $m_H$ is placed, two legs attached to the latter, each with a point mass $m_l$ at a certain distance $l$ from the joint, and two foot links of mass $m_f$ at the end of the legs. The feet are carved from a geometrical shape centered at the hip joint, such as a sphere to start with. $\theta_1$ is the angle made by the biped stance leg with the vertical (counterclockwise positive), while $\theta_2$ is the angle between the stance leg and the swing leg. The figure below shows such setup:
 
 \begin{figure}[h]
 \includegraphics[width=8cm]{figures/placeholder.jpg}
@@ -51,20 +51,17 @@ Each robot link can be described with a proper homogeneous transformation starti
 \begin{equation}\label{eq:2}
     \leftsuperscript{W}{H}{L} = 
     \left[\begin{array}{cccc}
-    \leftsuperscript{L[W]}{R}{L}(\theta_1) & \leftsuperscript{W}{p}{L}	\\
+    \leftsuperscript{W}{R}{L}(\theta_1) & \leftsuperscript{W}{p}{L}	\\
     0 & 1 
     \end{array}\right],
 \end{equation}
-where \[ \leftsuperscript{0}{p}{L} = \begin{pmatrix}x\\y\end{pmatrix} \] is the position of the point mass at the hip joint, and mixed velocity representation has been used.
-The fact that both feet are extracted from a sphere centred at the hip makes a frame placed at the contact point inertial with the base frame, at a constant distance $r$, which is the radius of the sphere. In other words:
+where \[ \leftsuperscript{W}{p}{L} = \begin{pmatrix}x\\y\end{pmatrix} \] is the position of the point mass at the hip joint.
+The fact that both feet are extracted from a sphere centred at the hip makes a frame placed at the contact point inertial with the base frame, at a constant distance $r$, which is the radius of the sphere. In other words, the contact point is kinematically defined as:
+\[
+\leftsuperscript{W}{\bb{p}}{C_1} = \leftsuperscript{W}{\bb{p}}{L} + \leftsuperscript{W}{R}{L}\bb{\delta} = \leftsuperscript{W}{\bb{p}}{L} - r\hat{\bb{y}}
+\]
 
-\begin{equation}\label{eq:3}
-    \leftsuperscript{L}{H}{C_1} = 
-    \left[\begin{array}{cccc}
-    \leftsuperscript{C_1[W]}{R}{L}(\theta_1) & \leftsuperscript{L}{p}{C_1}	\\
-    0 & 1 
-    \end{array}\right],\qquad \leftsuperscript{L}{p}{C_1} = \begin{pmatrix}0 \\  -r\end{pmatrix}
-\end{equation}
+
 
 \subsubsection*{Assumptions}
 For now, the dynamics of the model follow a few relaxable assumptions:
@@ -83,7 +80,7 @@ For now, the dynamics of the model follow a few relaxable assumptions:
 \subsection*{Equations for single stance}
 \begin{flushleft}
 
-Let us consider the generalised coordinates of the system to be $\bb{q} = \begin{pmatrix} \theta_1 \\ \theta2 \end{pmatrix}$, where $\theta_1$ and $\theta_2$ are the angles of the legs as described before, while x and y are the Cartesian coordinates of the hip point mass.
+Let us consider the generalised coordinates of the system to be $\bb{q} = \begin{bmatrix} x & y & \theta_1 & \theta_2 \end{bmatrix}^T$, where $\theta_1$ and $\theta_2$ are the angles of the legs as described before, while x and y are the Cartesian coordinates of the hip point mass.
 
 The equations of motion for a generic multi-body floating-base system is:
 \begin{equation}\label{eq:5}
@@ -91,8 +88,8 @@ The equations of motion for a generic multi-body floating-base system is:
 \end{equation}
 where $M(\bb{q})$ is the inertia matrix, $N(\bb{q}, \dot{\bb{q}}$) is the matrix with the centrifugal coefficients and $G(\bb{q})$ is a vector of gravitational torques.
 
-The 4-component state vector for the robot is $ x = \rvect{\theta_1 & \theta_2 & \dot{\theta_1} & \dot{\theta_2}}.$
-Thus we have $\bb{\dot{x_1}} = \bb{x_3}$, $\bb{\dot{x_2}} = \bb{x_3}$ and the time derivatives of $x_3$ and $x_4$ are obtained by rearranging Eq.\ref{eq:5} as $\rvect{\bb{\dot{x_3}} & \bb{\dot{x_4}}}^T = M^{-1} (-N\bb{\dot{q}} - G).$ \\
+The 4-component state vector for the robot is $ x = \rvect{\theta_1 & \dot{\theta_1} & \theta_2 & \dot{\theta_2}}.$
+Thus we have $\bb{\dot{x_1}} = \bb{x_2}$, $\bb{\dot{x_3}} = \bb{x_4}$ and the time derivatives of $x_2$ and $x_4$ are obtained by rearranging Eq.\ref{eq:5} as $\rvect{\bb{\dot{x_2}} & \bb{\dot{x_4}}}^T = M^{-1} (-C\bb{\dot{q}} - G).$ \\
 
 The addition of spherical feet gives rise to a rolling motion during the swing phase, and a contact constraint between the foot link and the terrain. In the specific case of a rolling motion, a reference frame placed at the contact point moves with respect to the parent link, so: 
 \[ \leftsuperscript{C_i}{J}{W,L/X}(\bb{q)} \neq \leftsuperscript{C_i}{J}{A,C_i/X}(\bb{q}) \]
@@ -105,7 +102,7 @@ where $\leftsuperscript{L}{J}{W,L/X}$ is the Jacobian calculated at the centre o
     \leftsuperscript{C_i}{X}{L} = 
     \begin{bmatrix}
         \leftsuperscript{C_i}{R}{L} & \leftsuperscript{C_i}{o}{L}^{\hat{}}\leftsuperscript{C_i}{R}{L} \\
-        0_{3\times3} & \leftsuperscript{C_i[W]}{R}{L[W]}
+        0_{3\times3} & \leftsuperscript{C_i}{R}{L}
     \end{bmatrix}
 \end{equation}
 
@@ -168,12 +165,10 @@ The negative sign comes from the opposite directions of the angles with respect 
 \end{equation}
 This condition also appears to be a great candidate for the definition of a Poincaré section when looking for a fixed point in the phase space.
 
-
-
-
-
-
 \end{flushleft}
+
+
+\section*{Walking analysis}
 
 
 \section*{Code}
