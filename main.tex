@@ -1,0 +1,154 @@
+\documentclass[12pt]{report}
+\usepackage[utf8]{inputenc} % per accenti italiani
+\usepackage[english]{babel}
+
+\usepackage{natbib}
+%\bibliographystyle{abbrvnat} 
+%\setcitestyle{authoryear,open={(},close={)}}
+
+
+%-------------- COMMANDS ----------------------
+% Writing
+\newcommand{\leftsuperscript}[3]{ {}^{#1}{#2}_{#3} } % Left superscript 
+\newcommand{\leftsubscript}[3]{$ {}_#1#2^{#3} $}
+\newcommand{\bb}[1]{\boldsymbol{#1}} % Bold symbol for vectors
+\newcommand{\rvect}[1]{\begin{bmatrix} #1 \end{bmatrix}} % Row vector
+\newcommand{\defeq}{\vcentcolon=} % Definition equal left
+\newcommand{\eqdef}{=\vcentcolon} % Definition equal right
+\newcommand{\wedged}[1]{#1^{\wedge}}
+\newcommand{\inrn}[1]{\in \mathbb{R}^{#1}}
+\newcommand{\vv}{\text{v}}
+\newcommand{\sskew}[1]{#1^{\wedge}}
+% Maths
+\newcommand{\ddt}[1]{\frac{d}{dt} \Big(#1 \Big)} % Full time derivative
+\newcommand{\iddt}[1]{\frac{d \Big(#1 \Big)}{dt}} % Inline time derivative
+\newcommand{\pddt}[1]{\frac{\partial}{\partial t} \Big(#1 \Big)} % Full partial time derivative
+\newcommand{\ipddt}[1]{\frac{\partial \Big(#1 \Big)}{\partial t}} % Full partial time derivative
+
+% Math symbols
+\DeclareSymbolFont{matha}{OML}{txmi}{m}{it}% txfonts
+\DeclareMathSymbol{\varv}{\mathord}{matha}{118}
+ 
+%-------------- PACKAGES ----------------------
+\usepackage{verbatim} % mass comments
+\usepackage{fancyhdr} % Headers and Footers
+\usepackage{dirtytalk}
+\usepackage{version}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{upgreek}
+\usepackage{bbold}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb} % maths symbols
+\usepackage{caption}
+\usepackage{subcaption}
+\expandafter\def\csname ver@subfig.sty\endcsname{}% subcaptions for side-by-side figures
+\usepackage{setspace}
+\usepackage{blindtext}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{subfig,graphicx} % 3 figures together
+\usepackage{mwe}% 3 figures together
+\usepackage{siunitx}
+\usepackage{textcomp}
+\usepackage{gensymb}
+\usepackage{txfonts}
+\usepackage{xcolor}
+\usepackage[justification=centering]{caption}
+\usepackage{parskip} %!!! for spacing after new line.
+\usepackage{blindtext}
+\usepackage{subfiles} % Best loaded last in the preamble
+\usepackage{cases} % Equation labels for cases equations
+\usepackage{amsthm} % Theorems, definitions, ...
+\geometry{a4paper, left=20mm, right= 20mm, bottom = 20mm}
+
+% Amsthm
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[chapter] % reset theorem numbering for each chapter
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition} % definition numbers are dependent on theorem numbers
+\newtheorem{exmp}[thm]{Example}
+
+
+% Intro
+\title{Co-design of an efficient humanoid foot morphology through zero-order optimisation techniques}
+\author{Lorenzo Conti}
+
+\begin{document}
+%---------------------- Landing page -----------------------
+
+\begin{titlepage}
+    \begin{figure}
+        \centering
+        \includegraphics{images/uni/logo_unimi_scienze.jpg}
+        \label{logo_tesi}
+    \end{figure}
+	\centering
+    
+    \begin{center}
+        %Corso di Laurea
+    	\Large{ Corso di Laurea in Fisica }\\
+    	\vspace{5mm}
+    	\large{Tesi di Laurea Magistrale}\\
+    	\vspace{10mm}
+    	%Titolo
+        {\LARGE{\bf Co-design of an efficient humanoid foot morphology through zero-order optimisation techniques}}\\
+    	\vspace{10mm}
+    	\large{Codice PACS: }
+    \end{center}
+    
+    \vfill
+    
+    \begin{minipage}[t]{0.47\textwidth}
+        %Relatore
+    	{\large{ Relatore:\\ \\\bf Prof. \\Carlo BARBIERI}}
+    	\vspace{5mm}\\
+    	%Correlatore
+    	{\large{ Relatore esterno:\\ \\\bf Dr. \\Daniele PUCCI}}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.4\textwidth}\raggedleft
+        %Candidato
+    	{\large{Candidato: \\ \bf Lorenzo CONTI\\}}
+    	\vspace{5mm}
+    	{\large{Matricola: \\ \bf 05625A\\}}
+    \end{minipage}
+    
+    \vfill
+    
+    %Anno Accademico
+    \centering{\large \uppercase{ Anno Accademico 2023/2024 }}
+    
+    \vfill
+\end{titlepage}
+
+%---------------------- Table of contents -----------------------
+\tableofcontents
+
+%---------------------- Chapters --------------------------------
+\chapter*{Abstract}
+\subfile{sections/abstract}
+
+\part{Background \& Literature Review}
+\subfile{sections/background}
+
+\part{Contribution}
+\subfile{}|
+
+\part{Results}
+\subfile{}
+
+\part{Conclusions}
+\subfile{}
+
+\part{Appendix A} % Derivations & Proofs
+
+\part{Appendix B} % Simulation Parameters & Settings
+
+
+\end{document}
