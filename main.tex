@@ -1,242 +1,155 @@
-\documentclass[11pt]{article}
 
-% Packages
-\usepackage{graphicx} % Required for inserting images
-\usepackage{blindtext}
-\usepackage{mathtools}
-\usepackage{amsmath}
-\usepackage{bbold}
-\usepackage{dsfont}
-\usepackage{listings}
-\usepackage{geometry}
- \geometry{
-     a4paper,
-     total={170mm,257mm},
-     left=20mm,
-     top=20mm,
- }
+\documentclass[12pt]{report}
+\usepackage[utf8]{inputenc} % per accenti italiani
+\usepackage[english]{babel}
 
- %% Commands
- \newcommand{\leftsuperscript}[3]{ {}^{#1}{#2}_{#3} } % Left superscript 
- \newcommand{\bb}[1]{\boldsymbol{#1}} % Bold symbol for vectors
- \newcommand{\rvect}[1]{\begin{bmatrix} #1 \end{bmatrix}} % Row vector
+\usepackage{natbib}
+%\bibliographystyle{abbrvnat} 
+%\setcitestyle{authoryear,open={(},close={)}}
+
+
+%-------------- COMMANDS ----------------------
+% Writing
+\newcommand{\leftsuperscript}[3]{ {}^{#1}{#2}_{#3} } % Left superscript 
+\newcommand{\leftsubscript}[3]{$ {}_#1#2^{#3} $}
+\newcommand{\bb}[1]{\boldsymbol{#1}} % Bold symbol for vectors
+\newcommand{\rvect}[1]{\begin{bmatrix} #1 \end{bmatrix}} % Row vector
+\newcommand{\defeq}{\vcentcolon=} % Definition equal left
+\newcommand{\eqdef}{=\vcentcolon} % Definition equal right
+\newcommand{\wedged}[1]{#1^{\wedge}}
+\newcommand{\inrn}[1]{\in \mathbb{R}^{#1}}
+\newcommand{\vv}{\text{v}}
+\newcommand{\sskew}[1]{#1^{\wedge}}
+% Maths
+\newcommand{\ddt}[1]{\frac{d}{dt} \Big(#1 \Big)} % Full time derivative
+\newcommand{\iddt}[1]{\frac{d \Big(#1 \Big)}{dt}} % Inline time derivative
+\newcommand{\pddt}[1]{\frac{\partial}{\partial t} \Big(#1 \Big)} % Full partial time derivative
+\newcommand{\ipddt}[1]{\frac{\partial \Big(#1 \Big)}{\partial t}} % Full partial time derivative
+
+% Math symbols
+\DeclareSymbolFont{matha}{OML}{txmi}{m}{it}% txfonts
+\DeclareMathSymbol{\varv}{\mathord}{matha}{118}
  
-\title{Passive Walker Analysis}
+%-------------- PACKAGES ----------------------
+\usepackage{verbatim} % mass comments
+\usepackage{fancyhdr} % Headers and Footers
+\usepackage{dirtytalk}
+\usepackage{version}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{upgreek}
+\usepackage{bbold}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb} % maths symbols
+\usepackage{caption}
+\usepackage{subcaption}
+\expandafter\def\csname ver@subfig.sty\endcsname{}% subcaptions for side-by-side figures
+\usepackage{setspace}
+\usepackage{blindtext}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{subfig,graphicx} % 3 figures together
+\usepackage{mwe}% 3 figures together
+\usepackage{siunitx}
+\usepackage{textcomp}
+\usepackage{gensymb}
+\usepackage{txfonts}
+\usepackage{xcolor}
+\usepackage[justification=centering]{caption}
+\usepackage{parskip} %!!! for spacing after new line.
+\usepackage{blindtext}
+\usepackage{subfiles} % Best loaded last in the preamble
+\usepackage{cases} % Equation labels for cases equations
+\usepackage{amsthm} % Theorems, definitions, ...
+\geometry{a4paper, left=20mm, right= 20mm, bottom = 20mm}
+
+% Amsthm
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[chapter] % reset theorem numbering for each chapter
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition} % definition numbers are dependent on theorem numbers
+\newtheorem{exmp}[thm]{Example}
+
+
+% Intro
+\title{Co-design of an efficient humanoid foot morphology through zero-order optimisation techniques}
 \author{Lorenzo Conti}
 
 \begin{document}
+%---------------------- Landing page -----------------------
 
-\maketitle
-
-\section*{Introduction}
-A brief introduction to passive walking and the aim of this article. 
-
-\section*{Model setup}
-\begin{flushleft}
-%% Description of the setup of the model, such as: link and joint structure, model parameters, generalised coordinates, system.
-
-The proposed model consists of a single passive pin joint located at the hip where a point mass $m_H$ is placed, two legs attached to the latter, each with a point mass $m_l$ at a certain distance $l$ from the joint, and two foot links of mass $m_f$ at the end of the legs. The feet are carved from a geometrical shape centered at the hip joint, such as a sphere to start with. $\theta_1$ is the angle made by the biped stance leg with the vertical (counterclockwise positive), while $\theta_2$ is the angle between the stance leg and the swing leg. The figure below shows such setup:
-
-\begin{figure}[h]
-\includegraphics[width=11cm]{figures/pw_final.png}
-\centering
-\end{figure}
-
-The passive walker ought to walk on a flat surface inclined by an angle $\gamma$, so that its motion is driven by gravity and is halted by the friction and collisions of the swing leg against the ground at each foot strike. The gait consists of a single-stance or swing phase and an instantaneous transition phase, or foot strike. A single swing phase is defined as the unit step, which is also the time period between two foot strikes, and is the sequence of values that is looked to be repeated perpetually. Following the inclination of the terrain, it is helpful to define two global reference frames around which the robot walks: a world frame and a ground frame. The ground frame is built into the terrain and is thus tilted by the angle $\gamma$ with respect to the world frame. Then, any vector in world frame can be transformed to the ground frame with the following rotation:
-\begin{equation}\label{eq:ground_frame}
-    \leftsuperscript{G}{r}{} = R_{\gamma}^{-1} \leftsuperscript{W}{r}{},
-\end{equation}
-where $ R_{\gamma}R_{\gamma}^{-1} = \mathbb{1}. $
-
-Each robot link can be described with a proper homogeneous transformation starting from a base frame placed in the hip joint, that rotates together with the stance leg and the imaginary sphere from which the feet are extracted:
-\begin{equation}\label{eq:link_pose}
-    \leftsuperscript{W}{H}{L} = 
-    \left[\begin{array}{cccc}
-    \leftsuperscript{W}{R}{L}(\theta_1) & \leftsuperscript{W}{p}{L}	\\
-    0 & 1 
-    \end{array}\right],
-\end{equation}
-where \[ \leftsuperscript{W}{p}{L} = \begin{pmatrix}x\\y\end{pmatrix} \] is the position of the point mass at the hip joint.
-The fact that both feet are extracted from a sphere centred at the hip makes a frame placed at the contact point inertial with the base frame, at a constant distance $r$, which is the radius of the sphere. In other words, the contact point is kinematically defined as:
-
-\begin{equation}\label{eq:cp_position}
-\leftsuperscript{W}{\bb{p}}{C_1} = \leftsuperscript{W}{\bb{p}}{L} + \leftsuperscript{W}{R}{L}\bb{\delta} = \leftsuperscript{W}{\bb{p}}{L} - r\hat{\bb{y}}
-\end{equation}
-
-
-
-\subsubsection*{Assumptions}
-For now, the dynamics of the model follow a few relaxable assumptions:
-\begin{enumerate}
-    \item The impact of the swing leg with the ground is assumed to be frictional inelastic.
-    \item The foot does not slip while rolling during the swing phase.
-    \item The transition stage is instantaneous, therefore there is always one contact point during a swing phase. $dt^{-\rightarrow +} \rightarrow 0.$
-\end{enumerate}
-
-\end{flushleft}
-
-
-\section*{Model mathematics}
-%% Calculation of the equations of motion for the model.
-
-\subsection*{Equations for single stance}
-\begin{flushleft}
-
-Let us consider the generalised coordinates of the system to be $\bb{q} = \begin{bmatrix} x & y & \theta_1 & \theta_2 \end{bmatrix}^T$, where $\theta_1$ and $\theta_2$ are the angles of the legs as described before, while x and y are the Cartesian coordinates of the hip point mass.
-
-The equations of motion for a generic multi-body floating-base system is:
-\begin{equation}\label{eq:eom}
-    M(\bb{q}) \ddot{\bb{q}} + C(\bb{q}, \dot{\bb{q}}) \dot{\bb{q}} + G(\bb{q}) = \sum_{k \in I_C} J_k^T \boldsymbol{f_k},
-\end{equation}
-where $M(\bb{q})$ is the inertia matrix, $N(\bb{q}, \dot{\bb{q}}$) is the matrix with the centrifugal coefficients and $G(\bb{q})$ is a vector of gravitational torques.
-
-The 4-component state vector for the robot is $ x = \rvect{\theta_1 & \dot{\theta_1} & \theta_2 & \dot{\theta_2}}.$
-Thus we have $\bb{\dot{x_1}} = \bb{x_2}$, $\bb{\dot{x_3}} = \bb{x_4}$ and the time derivatives of $x_2$ and $x_4$ are obtained by rearranging Eq.\ref{eq:eom} as $\rvect{\bb{\dot{x_2}} & \bb{\dot{x_4}}}^T = M^{-1} (-C\bb{\dot{q}} - G).$ \\
-
-The addition of spherical feet gives rise to a rolling motion during the swing phase, and a contact constraint between the foot link and the terrain. In the specific case of a rolling motion, a reference frame placed at the contact point moves with respect to the parent link, so: 
-\[ \leftsuperscript{C_i}{J}{W,L/X}(\bb{q)} \neq \leftsuperscript{C_i}{J}{A,C_i/X}(\bb{q}) \]
-Therefore, it is more convenient to calculate the Jacobian of the link reference frame and transposing it to the contact point through a properly defined velocity transformation:
-\begin{equation}\label{eq:cp_jacobian}
-    \leftsuperscript{C_i}{J}{W,L/X}(\bb{q}) = \leftsuperscript{C_i}{X}{L}\leftsuperscript{L}{J}{W,L/X}(\bb{q}), 
-\end{equation}
-where $\leftsuperscript{L}{J}{W,L/X}$ is the Jacobian calculated at the centre of mass of the imaginary sphere, and $\leftsuperscript{C_i}{X}{L}$ if a matrix defined as:
-\begin{equation}\label{eq:cp_adjoint_matrix}
-    \leftsuperscript{C_i}{X}{L} = 
-    \begin{bmatrix}
-        \leftsuperscript{C_i}{R}{L} & \leftsuperscript{C_i}{o}{L}^{\hat{}}\leftsuperscript{C_i}{R}{L} \\
-        0_{3\times3} & \leftsuperscript{C_i}{R}{L}
-    \end{bmatrix}
-\end{equation}
-
-Additionally, the contact point of a rolling sphere cannot have its position constrained to a fixed point, but rather its acceleration receives a centripetal force towards the centre of the sphere. The contact point defined in Eq. \ref{eq:cp_position} can be derived with respect to time to calculate its velocity, which must be imposed to zero because of the condition of no slipping:
-\[
-\leftsuperscript{W}{\bb{\dot{p}}}{C_i} = \leftsuperscript{W}{\bb{\dot{p}}}{L} - r\leftsuperscript{W}{\bb{\omega}}{W,L}^{\hat{}}\bb{\hat{z}} = 0.
-\]
-Deriving this equation again, we obtain the constrain on the acceleration:
-
-\begin{equation}\label{eq:cp_acceleration_constraint}
-    \leftsuperscript{W}{\bb{\ddot{p}}}{L} = r \leftsuperscript{W}{\bb{\omega}}{W,L}^{\hat{}}\bb{\hat{z}}
-\end{equation}
-
-\end{flushleft}
-
-
-\subsection*{Equations for footstrike}
-\begin{flushleft}
-The condition to differentiate the instants before and after the collision is found by identifying which contact point is active, considering the assumption that, during the swing phase, only one contact point can be active at a time:
-\[
-\begin{cases}
-      v_{c_1} = 0, & \text{before collision}\\
-      v_{c_2} = 0, & \text{after collision}
-    \end{cases}
-\]
-Because of this constraint imposed on the velocities of both contact points, both will receive a sudden change during foot strike.
-Let us start by assuming that the collision happens instantaneously, that is $dt^{- \rightarrow +} \longrightarrow 0$. 
-
-Then, it is possible to integrate the equations of motion with respect to time during the collision:
-\begin{equation}\label{eq:eom_collision_integral}
-    \int_{t^-}^{t^+} M\bb{\ddot{q}} dt + \int_{t^-}^{t^+} C(\bb{q},\bb{\dot{q}}) \bb{\dot{q}}dt + \int_{t^-}^{t^+} G(\bb{q)}dt = \int_{t^-}^{t^+} J_{c_1}^T F_{c_1}dt + \int_{t^-}^{t^+} J_{c_2}^T F_{c_2}dt
-\end{equation}
-
-Let's introduce a few assumptions for the foot collision:
-\begin{enumerate}
-    \item The Coriolis, centripetal and gravitational effects undergo negligible changes in a time $dt$,
-    \item When a foot strikes the ground, the impulse is only felt on the swing leg, or at contact point $c_2$,
-\end{enumerate}
-Then, Eq. \ref{eq:eom_collision_integral} simplifies to 
-\begin{equation}\label{eq:footstrike_equation}
-    M(\bb{\dot{z}^+} - \bb{\dot{z}^-}) = J_{c_2}\bb{I_{c_2}},
-\end{equation}
-where $\bb{I_{c_2}}$ is the impulse on the contact point of the swing leg.
-If we also apply the condition of rolling motion for the new contact point, we have:
-\begin{equation}\label{eq:footstrike_velocity_condition}
-    \bb{v_{c_2}}^+ = J_{c_2}\bb{\dot{q}}^+ = 0
-\end{equation}
-
-The foot-strike event is governed by the conservation of angular momentum and the kinematic constraint that the new stance foot must have zero velocity after impact. The steps for the derivation are:
-\begin{enumerate}
-    \item Compute the Jacobian of the swing foot: $J_{c_2} = \frac{\delta \leftsuperscript{0}{\bb{r}}{c_2}}{\delta\bb{q}}$
-    \item Determine the mass-inertia matrix pre-impact by computing the Jacobian of the equations of motion with respect to the accelerations $\bb{\ddot{q}}$.
-    \item Define pre-impact generalised velocities: $\bb{\dot{q}}_- = \rvect{0 & 0 & \omega_1^- & \omega_2^-}^T$, where the linear velocities of the stance foot are constrained to zero.
-    \item Compute the momentum equation before impact as $\bb{b} = M_- \bb{\dot{q}}_-$
-    \item Construct the augmented matrix from post-impact velocities:
-    \[
-    M^+ = \begin{bmatrix}
-        M_- & -J^T\\
-        J & 0_{2\times2}
-    \end{bmatrix}
-    \]
-    \item Solve for post-impact velocities: $\bb{\dot{q}}^+ =M_+^{-1} \bb{b}$
-\end{enumerate}
-
-
-Since the goal is to look for a perpetual gait where the initial conditions of a step repeat endlessly, it is important to define a condition for foot strike. This can be, for example, when the angles between both legs and the normal are the same: $\theta_1 = -2\theta_2$.
-The negative sign comes from the opposite directions of the angles with respect to the normal. The condition is then:
-\begin{equation}\label{eq:footstrike_angle_condition}
-    \theta_2 + 2\theta_1 = 0.
-\end{equation}
-This condition also appears to be a great candidate for the definition of a Poincaré section when looking for a fixed point in the phase space.
-
-\end{flushleft}
-
-
-\section*{Walking analysis}
-\begin{flushleft}
-
-A Poincaré map, also known as a Poincaré section, is a fundamental tool in the qualitative analysis of dynamical systems. It represents the intersections of trajectories of a continuous-time dynamical system with a chosen lower-dimensional subspace, typically a hyper-surface transversal to the flow.
-Mathematically, for a system governed by differential equations
-\[\dot{x} = f(x),\]
-where $x \in \mathbb{R}^N$, the Poincaré map is a discrete mapping $P: S \rightarrow S$ defined on the section S such that each point $x_k \in S$ is mapped to the next intersection $x_{k+1} = P(x_k)$.
-This transformation reduces the dimensionality of the system by one and converts continuous dynamics into a discrete-time iteration, facilitating the study of periodic orbits and stability.
-\end{flushleft}
-
-
-
-\section*{Code}
-\begin{flushleft}
-The Matlab code for this simulation is divided into two parts: a symbolic script used to derive the mathematical expressions of some variables, and a simulation script that simulates the passive walker, and into which the output of the symbolic script is inserted. 
-\subsubsection*{Derivation script}
-To start with, the position vectors, associated Jacobians and velocities of crucial points of the model are calculated. The goal of this is to calculate the Lagrangian as $\mathcal{L}(\bb{q}, \bb{\dot{q}}) = \mathcal{T}-\mathcal{V}$, where $\mathcal{T} = \frac{1}{2}\bb{\dot{q}}^T M(q)\bb{\dot{q}}$ is the free-floating kinetic energy and $\mathcal{V} = \mathcal{V}(\bb{q})$ is the potential energy.
-From the Lagrangian, one can finally calculate the equations of motion by applying Euler-Lagrange's equations:
-\begin{equation}
-    \frac{d}{dt}(\frac{\partial \mathcal{L}}{\partial\bb{\dot{q}}}) - \frac{\partial\mathcal{L}}{\partial \bb{q}} = \sum_{k\in \mathcal{I}} J_k \lambda_k,
-\end{equation}
-which is a $4\times1$ system.
-
-Once the equations of motion have been calculated for each coordinate $q_i$, one can calculate the coefficients of the multi-body free-floating equations of motion:
-\begin{enumerate}
-    \item Mass-Inertia matrix: Calculate the Jacobian with respect to the accelerations to isolate the matrix: $M = \frac{\partial [EoM]}{\partial \bb{\ddot{q}}}$
-    \item Constant terms: Set the accelerations to zero ($\bb{\ddot{q}} = 0$) to calculate the constant terms for equation $A\bb{x} = \bb{b}$.
-\end{enumerate}
-
-
-
-The calculation of the equations of motion:
-\begin{lstlisting}
-q = [x y theta1 theta2];
-qdot = [vx vy omega1 omega2];
-qddot = [ax ay alpha1 alpha2];
-
-
-for ii=1:4
-    dLdqdot(ii) = diff(L,qdot(ii));
-    ddt_dLdqdot(ii) = 
-        diff(dLdqdot(ii),q(1))*qdot(1) + diff(dLdqdot(ii),qdot(1))*qddot(1)+...
-        diff(dLdqdot(ii),q(2))*qdot(2) + diff(dLdqdot(ii),qdot(2))*qddot(2)+...
-        diff(dLdqdot(ii),q(3))*qdot(3) + diff(dLdqdot(ii),qdot(3))*qddot(3)+...
-        diff(dLdqdot(ii),q(4))*qdot(4) + diff(dLdqdot(ii),qdot(4))*qddot(4);
-    dLdq(ii) = diff(L,q(ii));
-
-    EOM(ii) = ddt_dLdqdot(ii) - dLdq(ii);
-end
-\end{lstlisting}
-
+\begin{titlepage}
+    \begin{figure}
+        \centering
+        \includegraphics{images/uni/logo_unimi_scienze.jpg}
+        \label{logo_tesi}
+    \end{figure}
+	\centering
     
-\end{flushleft}
+    \begin{center}
+        %Corso di Laurea
+    	\Large{ Corso di Laurea in Fisica }\\
+    	\vspace{5mm}
+    	\large{Tesi di Laurea Magistrale}\\
+    	\vspace{10mm}
+    	%Titolo
+        {\LARGE{\bf Co-design of an efficient humanoid foot morphology through zero-order optimisation techniques}}\\
+    	\vspace{10mm}
+    	\large{Codice PACS: }
+    \end{center}
+    
+    \vfill
+    
+    \begin{minipage}[t]{0.47\textwidth}
+        %Relatore
+    	{\large{ Relatore:\\ \\\bf Prof. \\Carlo BARBIERI}}
+    	\vspace{5mm}\\
+    	%Correlatore
+    	{\large{ Relatore esterno:\\ \\\bf Dr. \\Daniele PUCCI}}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.4\textwidth}\raggedleft
+        %Candidato
+    	{\large{Candidato: \\ \bf Lorenzo CONTI\\}}
+    	\vspace{5mm}
+    	{\large{Matricola: \\ \bf 05625A\\}}
+    \end{minipage}
+    
+    \vfill
+    
+    %Anno Accademico
+    \centering{\large \uppercase{ Anno Accademico 2023/2024 }}
+    
+    \vfill
+\end{titlepage}
 
+%---------------------- Table of contents -----------------------
+\tableofcontents
 
+%---------------------- Chapters --------------------------------
+\chapter*{Abstract}
+\subfile{sections/abstract}
 
-\section*{Changelog}
-\input{changelog}
+\part{Background \& Literature Review}
+\subfile{sections/background}
+
+\part{Contribution}
+\subfile{}|
+
+\part{Results}
+\subfile{}
+
+\part{Conclusions}
+\subfile{}
+
+\part{Appendix A} % Derivations & Proofs
+
+\part{Appendix B} % Simulation Parameters & Settings
+
 
 \end{document}
