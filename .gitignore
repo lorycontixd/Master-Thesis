@@ -1,0 +1,52 @@
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.blg
+*.brf
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.toc
+*.acn
+*.acr
+*.alg
+*.dvi
+*.fdb_latexmk
+*.fls
+*.glg
+*.glo
+*.gls
+*.gz
+*.ist
+*.loa
+*.lol
+*.maf
+*.mtc
+*.mtc0
+*.nav
+*.nlo
+*.nls
+*.snm
+*.synctex.gz
+*.tdo
+*.thm
+*.toc
+*.vrb
+*.xdy
+
+# PDF files
+*.pdf
+
+# Backup files
+*~
+*.bak
+
+# Editor-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
