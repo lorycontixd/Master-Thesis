@@ -692,11 +692,53 @@ Using reduced coordinates, the \textit{generalised position} and \textit{general
 \end{equation}
 where $s \inrn{n}$ are the joint positions.
 
+Considering the case where the model is only composed of 1-DoF joints, $n$ is the overall number of internal degrees of freedom, which equals the number of joints $n_j$. We can define the system velocity vector $\nu^B \inrn{6+n_j}$ using the left-trivialised velocity representation and the right or mixed velocity representation:
+
+\begin{align}
+    \nu^{B/B} = 
+    \begin{bmatrix}
+        \leftsuperscript{B}{\vv}{A,B}\\
+        \dot{s}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        \leftsuperscript{A}{R}{B}^T \leftsuperscript{A}{\dot{o}}{B}\\
+        (\leftsuperscript{A}{R}{B}^T \leftsuperscript{A}{\dot{R}}{B})^\vee\\
+        \dot{s}
+    \end{bmatrix} \inrn{n+6}
+    \\
+    \nu^{A/B} = 
+    \begin{bmatrix}
+        \leftsuperscript{A}{\vv}{A,B}\\
+        \dot{s}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        \leftsuperscript{A}{R}{B}^T \leftsuperscript{A}{\dot{o}}{B}\\
+        (\leftsuperscript{A}{R}{B}^T \leftsuperscript{A}{\dot{R}}{B})^\vee\\
+        \dot{s}
+    \end{bmatrix} \inrn{n+6}
+\end{align}
+
+The Lagrangian for a free-Floating system can be obtained as the sum of the Lagrangian of each rigid body.:
+
+\begin{subequations}
+\begin{equation}
+  l(q, \nu) =
+\end{equation}    
+\begin{equation}
+  b
+\end{equation}
+\end{subequations}
+
+
 
 
 
 \chapter{Passive dynamic walking}
-Passive dynamic walking is a natural and energy-efficient form of bipedal locomotion that relies on the dynamics of a system, rather than active control, to produce a walking motion.  Inspired by the physics of human gait and the behaviour of simple mechanical systems, passive dynamic walkers show that stable walking can emerge from the interaction of gravity, inertia, and properly tuned mechanics. Most of them are minimalistic designs with things like hinged legs and sensibly placed masses, which permit walking down a slope under the action of gravity without relying on motors. The energetics of a passive walker follow a simple rule: the energy lost due to friction and collisions when the swing leg returns to the ground is balanced by the gradual conversion of potential energy into kinetic energy as the walker advances down the slope. By understanding the principles that govern passive dynamics, researchers seek to develop systems that balance simplicity and efficiency with functionality for a variety of engineering applications. 
+Passive dynamic walking is a natural and energy-efficient form of bipedal locomotion that relies on the dynamics of a system, rather than active control, to produce a walking motion.  Inspired by the physics of human gait and the behaviour of simple mechanical systems, passive dynamic walkers show that stable walking can emerge from the interaction of gravity, inertia, and properly tuned mechanics. Most of them are minimalistic designs with things like hinged legs and sensibly placed masses, which permit walking down a slope under the action of gravity without relying on motors. The energetics of a passive walker follow a simple rule: the energy lost due to friction and collisions when the swing leg returns to the ground is balanced by the gradual conversion of potential energy into kinetic energy as the walker advances down the slope. By understanding the principles that govern passive dynamics, researchers seek to develop systems that balance simplicity and efficiency with functionality for a variety of engineering applications.
+
+
+
+
 
 
 
