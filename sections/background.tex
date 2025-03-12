@@ -662,9 +662,9 @@ maps each link $L\in \mathcal{L}$ to its parent, with the exclusion of the base 
 \end{defn}
 
 
-
 \subsection{Relative Forward Kinematics}
-Let us denote respectively with $s\inrn{n}$ and $\dot{s}\inrn{n}$ the positions and velocities of all joints of the system. It is now possible to define the relationships between the joint positions $s$ of the multi-body system and the relative positions, velocities and accelerations of the bodies composing the system. The \textit{relative forward kinematics} is the relative position of two arbitrary bodes $L,D \in \mathcal{L}$, and it is defined as
+Let us denote respectively with $s\inrn{n}$ and $\dot{s}\inrn{n}$ the positions and velocities of all joints of the system. It is now possible to define the relationships between the joint positions $s$ of the multi-body system and the relative positions, velocities and accelerations of the bodies composing the system. 
+The \textit{relative forward kinematics} is the relative position of two arbitrary bodes $L,D \in \mathcal{L}$, and it is defined as
 
 \begin{equation}\label{forward_kinematics}
     \leftsuperscript{L}{H}{D}(s) = \leftsuperscript{L}{H}{\lambda_D(L)}\leftsuperscript{\lambda_D(L)}{H}{\lambda^2_D(L)}\cdots\leftsuperscript{\lambda^{d-1}_D(L)}{H}{\lambda^d_D(L)}.
@@ -679,7 +679,7 @@ As done in \ref{relative_velocity_joint_motion_subspace}, in general the left-tr
 where $\leftsuperscript{D}{S}{L,D}(s) \inrn{6\times n}$ is the relative left-trivialised \textit{Jacobian}.
 
 
-\subsection{Multi-body Lagrangian Dynamics}\label{ssec_multibody_lagrangian}
+\subsection{Positions and velocities}\label{ssec_multibody_lagrangian}
 The equations of motion that describe the dynamics of the system are a second-order differential system. This requires the definition of a \textit{state}, which is essentially composed of positions and velocities. 
 The configuration of the free-floating system could be described by a set containing all link poses, but the presence of joints that introduce motion constraints allows the description of the system configuration through a pair composed of the pose of a \textit{base link} and the \textit{generalised joint positions}. These two methods of describing the system are respectively knows as \textit{maximal coordinates} and \textit{reduced coordinates}, and the last convention is used throughout the thesis.
 Using reduced coordinates, the \textit{generalised position} and \textit{generalised velocity} of the floating-base multi-body system are:
@@ -718,30 +718,327 @@ Considering the case where the model is only composed of 1-DoF joints, $n$ is th
     \end{bmatrix} \inrn{n+6}
 \end{align}
 
-The Lagrangian for a free-Floating system can be obtained as the sum of the Lagrangian of each rigid body.:
+The pose of a link E with respect to the world frame $W$ is
+\begin{equation}
+    \leftsuperscript{W}{H}{E}(q) = \leftsuperscript{W}{H}{B}\leftsuperscript{B}{H}{E}(s) =
+    \begin{bmatrix}
+        \leftsuperscript{W}{R}{B} & \leftsuperscript{W}{o}{B}\\
+        0_{1\times3} & 1
+    \end{bmatrix}\leftsuperscript{B}{H}{E}(s),
+\end{equation}
+where $\leftsuperscript{B}{H}{E}(s)$ is the relative pose between the base B and the link E, and it is a function of the joint positions $s$.
+
+The velocity of a link E with respect to the world frame $W$ is the sum of the base velocity and the velocity between the base B and link E:
+
+\begin{equation}\label{velocity_link_world_frame}
+    \leftsuperscript{E}{\vv}{W,E} + \leftsuperscript{E}{\vv}{W,B} + \leftsuperscript{E}{\vv}{B,E}
+\end{equation}
+
+We can rewrite the velocity between the base B and link E as the sum of the velocities between adjacent links in the path $\pi_B(E)$ connecting B to E:
+
+\begin{equation}
+    \begin{split}
+        \leftsuperscript{E}{v}{W,E} &= \leftsuperscript{E}{v}{W,B} + \sum_{L_i \in \{\pi_B(E)/B\}} \leftsuperscript{E}{\vv}{\lambda(L_i), L_i}\\
+        &= \leftsuperscript{E}{\vv}{W,B} + \sum_{L_i \in \{\pi_B(E)/B\}} \leftsuperscript{E}{X}{L_i}\leftsuperscript{L_i}{\vv}{\lambda(L_i), L_i}\\
+        &= \leftsuperscript{E}{\vv}{W,B} + \sum_{L_i \in \{\pi_B(E)/B\}} \leftsuperscript{E}{X}{L_i}\leftsuperscript{L_i}{S}{\lambda(L_i), L_i}(s)\dot{s},
+    \end{split}
+\end{equation}
+where the expression for the relative velocity between two adjacent links is given by \ref{relative_left_trivialised_velocity_jacobian}.
+
+In matrix form, the latter equation can be written as
+
+\begin{equation}\label{velocity_link_world_frame_matrix}
+    \leftsuperscript{E}{v}{W,E} =
+    \begin{bmatrix}
+        \leftsuperscript{E}{X}{X} & \leftsuperscript{E}{S}{B,E}(s)
+    \end{bmatrix}
+    \begin{bmatrix}
+        \leftsuperscript{X}{\vv}{W,B}\\
+        \dot{s}
+    \end{bmatrix},
+\end{equation}
+where $X$ is a placeholder for the velocity representation used for the system velocity.
+
+By introducing the matrix $\mathbb{S}_{B,E}\inrn{6\times n}$, whose $i^th$ column is defined as
+
+\begin{equation}\label{joint_motion_subspace_matrix}
+    \leftsuperscript{E}{S}{B,E}^{(:,i)}(s) =
+    \begin{cases}
+        \leftsuperscript{E}{X}{L}\leftsuperscript{L}{S}{\lambda(L),L}(s) \qquad\text{if}\;L\in \{ \pi_B(E)/B \}\\
+        0_6\qquad\qquad\qquad\text{otherwise}
+    \end{cases}
+\end{equation}
+
+We can then introduce the floating-base Jacobian of link E as
+
+\begin{equation}\label{floating_base_jacobian}
+    \leftsuperscript{E}{J}{W,E/X}(q) = 
+    \begin{bmatrix}
+        \leftsuperscript{E}{X}{X} & \leftsuperscript{E}{S}{B,E}(s)
+    \end{bmatrix} \inrn{6\times (6+n)}
+\end{equation}
+
+to rewrite Equation (\ref{velocity_link_world_frame_matrix}) as 
+
+\begin{equation}
+    \leftsuperscript{E}{\vv}{W,E} = \leftsuperscript{E}{J}{W,E/X}(q) \leftsuperscript{X}{\nu}{}
+\end{equation}
+
+The duality between $6D$ velocities and $6D$ forces also propagates to the definition of the floating-base Jacobian. If we consider a
+contact wrench $\leftsuperscript{C_i}{f_i}{}$, which could, for example, be the combination of forces and moments
+applied to the frame $C_i = (o_{C_i}, [A])$ associated with contact point i of link E, whose pose
+is defined by the transform $\leftsuperscript{E}{H}{C_i}$, we can use the Jacobian defined in Equation (\ref{floating_base_jacobian}) to
+project the wrench to the floating-base configuration space as:
+
+\begin{equation}
+    \leftsuperscript{C_i}{J}{W,L/X}^T(q) \leftsuperscript{C_i}{f}{} = \big( \leftsuperscript{C_i}{X}{L}\leftsuperscript{L}{J}{W,L/X}(q) \big)^T \leftsuperscript{C_i}{f}{} \inrn{6+n}
+\end{equation}
+In the particular example where the frame $C_i$ is time-varying, the most appropriate contact Jacobian is $\leftsuperscript{C_i}{J}{W,L}$ 
+instead of $\leftsuperscript{C_i}{J}{W,C_i}$, regardless of the system’s velocity representation X.
+
+\subsection{Lagrangian dynamics}
+
+The Lagrangian for a free-floating system can be obtained as the sum of the Lagrangian of each rigid body:
 
 \begin{subequations}
 \begin{equation}
-  l(q, \nu) =
+    l(q, \nu) = k(q, \nu) - U(q),
 \end{equation}    
 \begin{equation}
-  b
+    k(q, \nu) = \sum_{L \in \mathcal{L}} k_L(q, \nu) = \sum_{L \in \mathcal{L}} \leftsuperscript{L}{v}{W,L}^T \mathbb{M}_L \leftsuperscript{L}{v}{W,L} = \frac{1}{2} \nu^T M(s) \nu,
+\end{equation}
+\begin{equation}
+    U(q) =
+    \sum_{L \in \mathcal{L}} U_L(q) =
+    -\sum_{L \in \mathcal{L}} 
+    \begin{bmatrix}
+        \leftsuperscript{W}{g}{}^T & 0
+    \end{bmatrix}
+    \leftsuperscript{W}{H}{L}(q)
+    \begin{bmatrix}
+        m_L\leftsuperscript{L}{c}{L}\\
+        m_L
+    \end{bmatrix} = -
+    \begin{bmatrix}
+        g^T & 0_{1\times3}
+    \end{bmatrix} 
+    m\leftsuperscript{W}{H}{B}
+    \begin{bmatrix}
+        \leftsuperscript{B}{c(s)}{}\\
+        1
+    \end{bmatrix},
 \end{equation}
 \end{subequations}
+where the last equalities are the simplified versions of the kinetic and potential energy, respectively, due to the use of reduced coordinates.
 
+In the expression for the kinetic energy, $M(s) \inrn{(n+6) \times (n+6)}$ is the system's mass matrix, defined as:
 
+\begin{equation}\label{def_mass_matrix}
+    M(s) = \sum_{L \in \mathcal{L}} J_L^T(s) \mathbb{M}_L J_L(s),
+\end{equation}
+
+$m$ is the total mass of the system:
+
+\begin{equation}
+    m \defeq \sum_{L \in \mathcal{L}} m_L,
+\end{equation}
+
+and $\leftsuperscript{B}{c}{}(s)$ is the total centre of mass of the system.
+
+The equations of motion for the system are obtained by applying the Euler-Lagrange equations to the Lagrangian $l(q, \nu)$, and are given by:
+
+\begin{equation}\label{def_equations_of_motion_multibody}
+    M(s)\dot{\nu} + C(q, \nu)\dot{\nu} + G(q) =
+    \begin{bmatrix}
+        0_{6\times1}\\
+        \tau
+    \end{bmatrix}
+    + \sum_{L \in \mathcal{L}} J_L^T(s) f_L^{\text{ext}}.
+\end{equation}
+
+We recall that:
+
+\begin{equation}
+    \begin{aligned}
+        &M(q) = \sum_{L \in \mathcal{L}} J_L^T(s) \mathbb{M}_L J_L(s),\\
+        &C(q, \nu) = \sum_{L \in \mathcal{L}} J_L^T \Big[ \big( v_L \crossrn {}_L\mathbb{M}_L + {}_L\mathbb{M}_L v_L \times \big) J_L + {}_L\mathbb{M}_L \dot{J_L} \Big], \\
+        &G(q) = -M(q)
+        \begin{bmatrix}
+            \leftsuperscript{W}{R}{B}^T \leftsuperscript{W}{g}{}\\
+            0_{3\times1}\\
+            0_{n\times1}
+        \end{bmatrix},
+    \end{aligned}
+\end{equation}
+where $C(q, \nu)$ is the \textit{Coriolis matrix} and $G(q)$ is the \textit{gravity vector}.
+The term $\tau$ is the vector of joint torques, while $f_L^{\text{ext}}$ is an external force applied to the link $L$.
 
 
 
 \chapter{Passive dynamic walking}
-Passive dynamic walking is a natural and energy-efficient form of bipedal locomotion that relies on the dynamics of a system, rather than active control, to produce a walking motion.  Inspired by the physics of human gait and the behaviour of simple mechanical systems, passive dynamic walkers show that stable walking can emerge from the interaction of gravity, inertia, and properly tuned mechanics. Most of them are minimalistic designs with things like hinged legs and sensibly placed masses, which permit walking down a slope under the action of gravity without relying on motors. The energetics of a passive walker follow a simple rule: the energy lost due to friction and collisions when the swing leg returns to the ground is balanced by the gradual conversion of potential energy into kinetic energy as the walker advances down the slope. By understanding the principles that govern passive dynamics, researchers seek to develop systems that balance simplicity and efficiency with functionality for a variety of engineering applications.
+Passive dynamic walkers are a class of walking robots which exhibit a stable gait down a small inclined slope without the use of any motors. 
+These machines provide an elegant illustration of how proper machine design can generate stable and potentially very energy efficient walking.\cite{Tedrake:2004}
+In fact, the passive dynamic walking concept is based on the idea that the robot's dynamics can be exploited to generate a stable walking gait without the need for active control.
+The concept can then be extended to actuated systems, where the passive dynamics are used to reduce the control effort required to maintain stability.
+The energetics in passive walkers consist of a continuous exchange between kinetic and potential energy, and collisions: the energy lost to friction and collisions when th swing foot enters in contact with the ground is compensated by the gradual convertion of potential energy into kinetic energy during the swing phase, as the walker moves down the slope.
+
+\section{History}
+The first researches of passive dynamic walkers occurred in the late 1980s with the research of McGeer \cite{T.McGeer:1989}\cite{T.McGeer:1990a}\cite{T.McGeer:1990b}\cite{T.McGeer:1990c}
+He started this work with a simple example of a rimless wheel rolling down a slope \cite{T.McGeer:1990c}. During each step, the wheel gains energy from gravity and loses it when colliding with the terrain. 
+McGeer also contributed to the idealisation of a synthetic wheel that has a pin joint at the hub, with all legs removed but two consecutive ones, and cut the rim between the two spokes.
+Like a passive pendulum the swing leg swings forward, and at the same time the stance leg rolls forward at a constant speed. 
+The initial conditions play a huge role in balancing the energy exchange within the system, to produce a stable gait.
+As a follow up to the design of these models, McGeer simulated and built a rigid-legged passive walker that attained bidimensional dynamics due to double leg pairs: the outer legs functioned as one pair of legs, while the inner legs functioned as the second pair.
+The walker was not completely passive, as it included motors to fold the feet sideways during the swing phase to prevent toe-stubbing.
+
+
+
+
+\chapter{Zero-order optimisation techniques with focus on genetic algorithms}
+\section{Introduction to Zero-Order Optimization}
+
+Zero-order optimization methods, also known as derivative-free or black-box optimization techniques, have gained significant attention in engineering applications where objective function derivatives are unavailable, unreliable, or computationally expensive to obtain\cite{Audet2017}. 
+In this case, the function might be non-differentiable or noisy, making gradient-based methods unreliable. While first-order methods rely on gradient information or second-order methods that utilise Hessian matrices, zero-order methods only use function evaluations: $f(x)$, where $x$ is the input vector. 
+This property makes them suitable for optimizing complex systems such as passive dynamic walkers, where the robot motion's dependency on hardware parameters could be highly nonlinear and difficult to model analytically.\cite{T.McGeer:1990c}\cite{Collins2005}.
+Passive dynamic walkers rely on their morphology to achieve stable walking patterns without external inputs on the motors, making their behaviour highly sensitive to parameter configurations\cite{Kuo1999}\cite{Garcia1998}. 
+The dynamics of these systems are often complex, where small perturbations in the parameters such as leg length, mass distribution, or foot curvature can lead to highly different walking behaviors, from stable periodic gaits to falling motion\cite{Goswami1998}.
+
+\section{Overview of Zero-Order Optimization Methods}
+\subsection{Direct Search Methods}
+Direct search methods are a class of zero-order optimization techniques that explore the search space in an iterative way without the need for gradient information. In fact, they represent some of the earliest and most intuitive zero-order optimization approaches. 
+For example, the Nelder-Mead method\cite{Nelder1965} remains one of the most used direct search methods due to its simplicity and effectiveness for low-dimensional problems, despite being one of the oldest algorithms on the matter. 
+The method maintains a simplex (a generalization of a triangle in n-dimensional space) and iteratively replaces the worst vertex with a better point through reflection, expansion, or contraction operations.
+
+Pattern search methods\cite{Hooke1961}\cite{Torczon1997} systematically explore the parameter space using a predefined pattern of points.
+In the past, these methods have been applied to numerous robotics optimization systems, including the work by Chestnutt et al.\cite{Chestnutt2005} for footstep planning in humanoid robots. 
+However, their application to passive dynamic walkers has been limited due to the discontinuous nature of the objective function.
+Lastly, grid search and random search represent even simpler approaches compared to the prevously mentioned ones, where they systematically or randomly sample the parameter space.
+While conceptually simple and intuitive, these methods become computationally limiting when dealing with high-dimensional problems due to the curse of dimensionality.
+
+\subsection{Model-Based Methods}
+Model-based optimization methods improve search efficiency by constructing alternative models for the objective function.
+One of the earliest approaches by Box and Wilson\cite{Box1951} fits a polynomial model to sampled data points, using this approximation to identify promising regions for further exploration.
+Bayesian optimization, for example, takes a probabilistic approach, modeling the objective function with Gaussian processes to balance exploration of uncertain regions with exploitation of known promising areas.
+This method has shown to be particularly adequate for optimising passive dynamic walkers.
+For example, Calandra\cite{Calandra2016} applied it to gait optimization for a bipedal robot, achieving faster convergence compared to other zero-order methods.
+
+\subsection{Population-Based Methods}
+Population-based methods maintain and evolve a collection of candidate solutions.
+Some algorithms of this type include:
+
+\begin{itemize}
+    \item Particle swarm optimisation (PSO)\cite{Kennedy1995}
+    \item Differential evolution\cite{Storn1997}
+    \item Covariance Matrix Adaptation Evolution Strategy (CMA-ES)\cite{Hansen2001}
+\end{itemize}
+
+\section{Genetic Algorithms: Principles and Applications}
+\subsection{Fundamental Concepts of Genetic Algorithms}
+Genetic algorithms (GAs), introduced by Holland (1975) and popularized by Goldberg (1989), represent a class of evolutionary computational methods inspired by natural selection.
+They operate on a population of candidate solutions (individuals), applying various selection, crossover, and mutation operators to evolve increasingly fit individuals over successive generations.
+
+The basic genetic algorithm follows these key steps:
+\begin{enumerate}
+    \item \textbf{Initialisation}: Generate a initial population of random candidate solutions, or an initial guess.
+    \item \textbf{Evaluation}: Calculate the fitness of all individuals inside the population using the objective function.
+    \item \textbf{Selection}: Choose individuals for reproduction based on their fitness: the higher the better.
+    \item \textbf{Crossover}: Combine genes from the selected parents to create a new offspring as a new candidate solution.
+    \item \textbf{Mutation}: Introduce random changs to the offspring to maintain diversity.
+    \item \textbf{Replacement}: Form a new population from the offspring and possibly some parents.
+    \item \textbf{Termination}: Stop the algorithm when a termination criterion is met, such as a maximum number of generations or a fitness threshold.
+\end{enumerate}
+
+The representation of solutions as `chromosomes` is crucial in genetic algorithms.
+For the particular case of the parameter optimisation of a passive walker, floating point representations have largely replaced traditional binary encodings, as they more naturally represent continuous parameters such as link lengths, masses, and joint properties.
+Specialized genetic operators for real-valued GAs, such as arithmetic crossover and Gaussian mutation, have demonstrated superior performance for engineering optimization problems\cite{Deb1995}.
+
+\subsection{Advanced GA Techniques Relevant to PDW Optimization}
+Several advanced GA techniques have emerged that address challenges particularly relevant to passive dynamic walker optimization:
+
+\begin{itemize}
+    \item \textbf{Multi-objective genetic algorithms}, such as NSGA-II\cite{Deb2002}, enable the simultaneous optimization of multiple objectives.
+    \item \textbf{Constraint handling techniques} address the many constraints in PDW design. Approaches include penalty functions, repair operators, and specialized constraint-preserving operators.
+    \item \textbf{Niching and diversity preservation} techniques help maintain population diversity, which is potentially important for exploring the fitness domains with numerous local optima, which is a common feature of PDW parameter spaces.
+    \item \textbf{Hybrid algorithms} combine GAs with local search methods in memetic algorithms.
+\end{itemize}
+
+
+
+\subsection{GA Applications in Passive Dynamic Walker Optimisation}
+The application of genetic algorithms to passive dynamic walker optimisation has evolved considerably over the past three decades.
+Some of the earliest works on this matter came from McGeer's group,  using genetic algorithms to optimize a simple compass gait walker for energy efficiency.
+A considerable upgrade came with \cite{Collins2001}, who used genetic algorithms to optimize the physical parameters of a three-dimensional, kneed, two-legged passive dynamic walker.
+Their work proved that genetic algorithms could efficiently search the complex parameter space of 3D walkers, finding configurations that produced stable stable gaits on slopes without active control.
+
+Parametric optimization of more complex models was undertaken by Trifonov\cite{Trifonov2008}, who used GAs to optimize a kneed walker model with arms.
+This work emphasises the ability of genetic algorithms to work well with the increased dimensionality and complexity introduced by additional degrees of freedom on a robot.
+
+\subsection{Advantages of GAs for PDW Optimization}
+Genetic algorithms come with numerous advantages that make them particularly suitable for the objectives set by this thesis:
+
+\begin{itemize}
+    \item \textbf{Global exploration}: as mentioned earlier, GAs can navigate the complex parameter space of a passive passive walker, with multiple degrees of freedom, as numerous local optima may be present.
+    \item \textbf{Parallelizability}: GAs can be efficiently implemented on modern computing architectures, with fitness evaluations of different individuals performed concurrently.
+    This derives from a natural independence between individuals in the population.
+    \item \textbf{Flexibility in objective function formulation}: it enables the usage of different performance metrics without requiring their derivatives. This allows the optimisation of complex objectives such as mechanical energy efficiency, walking speed and so on.
+\end{itemize}
+
+
+\section{Implementation Considerations for the ptimization}
+\subsection{Fitness Function Design}
+How I designed the fitness function
+
+\subsection{GA Parameter Tuning}
+Which parameters are inserted in the tuning, and their domains.
+
+\subsection{Convergence Criteria}
+How the algorithm stops 
 
 
 
 
 
 
+\chapter{Stability analysis using Poincaré maps in robotic systems}
+\section{Introduction}
+Stability analysis is an important aspect of dynamical systems theory, particularly in the study of nonlinear systems, where the primary goal is to determine the stability of equilibrium points and periodic orbits.
+Poincaré maps reduce the complexity of continuous dynamical systems by examining their behavior on a lower-dimensional subspace, effectively converting a continuous-time system into a discrete-time system, by using the concept of Poincaré sections. 
+This reduction in dimensionality often facilitates the analysis and visualisation of complex behaviours.
 
-\chapter{Zero-order optimisation techniques}
+A Poincaré map is constructed by first defining a hypersurface $\Sigma$, known as the Poincaré section, which transversely intersects the trajectories of a dynamical system. 
+For an $n$-dimensional system, the Poincaré section is typically of dimension $n-1$. 
+The map $P: \Sigma \longrightarrow \Sigma$ takes a point $x_0$ on the section and maps it to the point $x_1$, where the trajectory starting from $x_0$ first returns to the section.
+In a robotic environment, for example, typical Poincaré sections are chosen to match with specific events in the robot's operation cycle, such as:
 
-\chapter{Poincaré maps \& Stability Analysis}
+\begin{itemize}
+    \item The instant of foot impact with the ground in walking robots
+    \item The instant of interaction between a chosen end-effector and an object during manipulation tasks
+    \item State transitions in hybrid robotic systems, and so on.
+\end{itemize}
+
+
+Formally, for a robotic system described by the differential equation $\dot{x} = f(x, u)$,
+where $x \inrn{n}$ represents the state of the robot and $u \inrn{m}$ represents control inputs, the Poincaré map is defined as:
+\[
+P(x) = \phi(\tau(x), x,u(\cdot)),
+\]
+where $\phi(\tau(x), x, u(\cdot))$ represents the solution at time $t$ with initial condition $x$ and control input trajectory $u(\cdot)$, and $\tau(x)$ is the first return time (for example the smallest $t > 0$ such that $\phi(\tau(x), x, u(\cdot)) \in \Sigma$).
+
+In robotics applications, fixed points often represent:
+\begin{itemize}
+    \item Stable walking gaits in legged robots
+    \item Cyclic manipulation tasks
+    \item Rhythmic movements in bio-inspired robots
+    \item Stable flight patterns in flapping-wing aerial robots
+\end{itemize}
+
+
+\section{Stability Analysis via Poincaré Maps for Robots}
+The stability of fixed points in the Poincaré map directly relates to the stability of the corresponding periodic orbits in the continuous robotic system. The local stability is determined by examining the eigenvalues of the Jacobian matrix $DP(x^{*})$ evaluated at the fixed point.
+The stability criteria for fixed points are:
+\begin{itemize}
+    \item If $|\lambda_i| < 1 \forall i$, the fixed point is a stable point of equilibrium, indicating that the robot will return to the periodic motion when applying small perturbations to its state.
+    \item If $|\lambda_i| > 1$ for at least one $i$, the fixed point is unstable. This means that the robot will deviate from the desired motion pattern when perturbed.
+    \item If all $|\lambda_i| = 1$, higher-order analysis is needed to determine stability, but this typically results in an unstable fixed point.
+\end{itemize}
+
