@@ -18,6 +18,9 @@
 \newcommand{\vv}{\text{v}}
 \newcommand{\sskew}[1]{#1^{\wedge}}
 \newcommand{\crossrn}{\overline{\times}^{*}}
+\newcommand{\myeq}[1]{\stackrel{\mathclap{\normalfont\mbox{#1}}}{=}} % text over equal sign
+\newcommand{\setItemnumber}[1]{\setcounter{enumi}{\numexpr#1-1\relax}} % rename enumerate item to another number
+
 % Maths
 \newcommand{\ddt}[1]{\frac{d}{dt} \Big(#1 \Big)} % Full time derivative
 \newcommand{\iddt}[1]{\frac{d \Big(#1 \Big)}{dt}} % Inline time derivative
@@ -29,6 +32,7 @@
 \DeclareMathSymbol{\varv}{\mathord}{matha}{118}
  
 %-------------- PACKAGES ----------------------
+\usepackage{xr} % Cross-referencing
 \usepackage{verbatim} % mass comments
 \usepackage{fancyhdr} % Headers and Footers
 \usepackage{dirtytalk}
@@ -62,6 +66,7 @@
 \usepackage{blindtext}
 \usepackage{subfiles} % Best loaded last in the preamble
 \usepackage{cases} % Equation labels for cases equations
+\usepackage{enumitem}
 \usepackage{amsthm} % Theorems, definitions, ...
 \geometry{a4paper, left=20mm, right= 20mm, bottom = 20mm}
 
@@ -75,7 +80,7 @@
 
 
 % Intro
-\title{Co-design of an efficient humanoid foot morphology through zero-order optimisation techniques}
+\title{Design and Optimization of Motor-less Humanoid Robot Lower-body Parameters for Stable Downhill Locomotion}
 \author{Lorenzo Conti}
 
 \begin{document}
@@ -96,7 +101,7 @@
     	\large{Tesi di Laurea Magistrale}\\
     	\vspace{10mm}
     	%Titolo
-        {\LARGE{\bf Co-design of an efficient humanoid foot morphology through zero-order optimisation techniques}}\\
+        {\LARGE{\bf Design and Optimization of Motor-less Humanoid Robot Lower-body Parameters for Stable Downhill Locomotion}}\\
     	\vspace{10mm}
     	\large{Codice PACS: }
     \end{center}
@@ -137,6 +142,7 @@
 \subfile{sections/background}
 
 \part{Contribution}
+\subfile{sections/contributions.tex}
 \subfile{}
 
 \part{Results}
@@ -146,6 +152,7 @@
 \subfile{}
 
 \part{Appendix A} % Derivations & Proofs
+\subfile{sections/appendices/appendix_a.tex}
 
 \part{Appendix B} % Simulation Parameters & Settings
 

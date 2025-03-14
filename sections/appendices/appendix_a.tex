@@ -1,0 +1,40 @@
+\section{Derivation of the coefficients of the equations of motion of the 3D passive walker}
+\label{sec:appendix_a}
+
+The equations of motions of the 3D passive walker are derived by appling the Euler-Lagrange method, which is a generalization of Newton's second law to systems with a variable number of generalized coordinates.
+The Euler-Lagrange equations are derived from the Lagrangian of the system, which is defined as the difference between the kinetic and potential energy of the system.
+The Lagrangian is defined as:
+\begin{equation}\label{eq:lagrangian}
+    L = T - U
+\end{equation}
+where $T$ is the kinetic energy of the system and $U$ is the potential energy of the system.
+The equations of motion are then derived by applying the Euler-Lagrange equations:
+\begin{equation}\label{eq:euler_lagrange}
+    \frac{d}{dt}\left(\frac{\partial L}{\partial \dot{q}_i}\right) - \frac{\partial L}{\partial q_i} = 0
+\end{equation}
+where $q_i$ are the generalized coordinates of the system and $\dot{q}_i$ are the corresponding generalized velocities.
+
+The walker described in this work has a point mass at the hip joint, two point masses at a certain vertical distance from the hip whic represent the legs, and two feet which could be considered as point masses if we know the respective center of masses, for example from the ankle joint.
+
+We start by writing the Lagrangian of the system. The subscripts $1$ and $2$ refer to the stance and swing leg, respectively. The subscripts $H$, $l$ and $f$ refer to the hip, leg and foot, respectively.
+
+\begin{equation}
+    \begin{split}
+        T &= \frac{1}{2} m_H \vv_H^T \vv_H + \frac{1}{2} m_l \vv_{l,1}^T \vv_{l,1} + \frac{1}{2} m_l \vv_{l,2}^T \vv_{l,2} + \frac{1}{2} m_f \vv_{f,1}^T \vv_{f,1} + \frac{1}{2} m_f \vv_{f,2}^T \vv_{f,2} \\
+        V &= m_H g z_H + m_l g z_{l,1} + m_l g z_{l,2} + m_f g z_{f,1} + m_f g z_{f,2}
+        L = T - V
+    \end{split}
+\end{equation}
+
+By applying the Euler-Lagrange equations (\ref{eq:euler_lagrange}) to the Lagrangian, we obtain the equations of motion of the system.
+Then, we calculate the coefficients in the following way:
+
+\begin{equation}\label{eq:coefficients_eom}
+    \begin{split}
+        H(q) &= \frac{\text{EOM}}{\ddot{q}}\\
+        C(q, \dot{q}) &= \frac{(\text{EOM}\;|\;\ddot{q} = 0)}{\dot{q}}\\
+        G(q) &= (\text{EOM}\;|\;\ddot{q} = \dot{q} = 0)
+    \end{split}
+\end{equation}
+
+%TODO: Report the analytical expressions of the coefficients of the equations of motion of the 3D passive walker.

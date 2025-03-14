@@ -790,7 +790,7 @@ applied to the frame $C_i = (o_{C_i}, [A])$ associated with contact point i of l
 is defined by the transform $\leftsuperscript{E}{H}{C_i}$, we can use the Jacobian defined in Equation (\ref{floating_base_jacobian}) to
 project the wrench to the floating-base configuration space as:
 
-\begin{equation}
+\begin{equation}\label{eq:contact_wrench_projection}
     \leftsuperscript{C_i}{J}{W,L/X}^T(q) \leftsuperscript{C_i}{f}{} = \big( \leftsuperscript{C_i}{X}{L}\leftsuperscript{L}{J}{W,L/X}(q) \big)^T \leftsuperscript{C_i}{f}{} \inrn{6+n}
 \end{equation}
 In the particular example where the frame $C_i$ is time-varying, the most appropriate contact Jacobian is $\leftsuperscript{C_i}{J}{W,L}$ 
@@ -890,8 +890,17 @@ Like a passive pendulum the swing leg swings forward, and at the same time the s
 The initial conditions play a huge role in balancing the energy exchange within the system, to produce a stable gait.
 As a follow up to the design of these models, McGeer simulated and built a rigid-legged passive walker that attained bidimensional dynamics due to double leg pairs: the outer legs functioned as one pair of legs, while the inner legs functioned as the second pair.
 The walker was not completely passive, as it included motors to fold the feet sideways during the swing phase to prevent toe-stubbing.
+dynamic walker can be described by a set of ordinary differential equations that govern the motion of the robot. 
 
+\section{Mathematical foundations}
+The dynamics of a passive walker can be described through a mixed dynamical system approach, combining continuous swing-phase dynamics of the legs with discrete impact events when the foot enters in contact with the ground.
+For a simple compass gait model, for example, which consists of a point mass body and two point mass legs, this motion can be described by a set of coupled differential equations derived from the Lagrangian mechanics:
 
+\begin{equation}
+    M(q)\ddot{\vec{q}} + C(\vec{q}, \dot{\vec{q}})\dot{\vec{q}} + G(\vec{q}) = 0,
+\end{equation}
+where $M(\theta)$ represents the inertia matrix, $C(\theta, \dot{\theta})$ accounts for Coriolis and centrifugal effects, and $G(\theta)$ describes gravitational forces.
+The vector $\vec{q}$ for such model typically includes the angle of the stance leg and the relative inter-leg angle.
 
 
 \chapter{Zero-order optimisation techniques with focus on genetic algorithms}

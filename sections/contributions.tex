@@ -1,0 +1,246 @@
+\chapter{Model setup}
+
+\section{Compass gait model}
+% TODO: Add vector notation to theta in this section
+To model the more complex system of a humanoid robot with curved feet and eventually additional joints, we start by implementing a simple, yet extremely insightful model which will be the foundation of future configurations: a compass gait model.
+This underlying model captures the essential dynamics of bipedal locomotion, while remaining analytically tractable. 
+
+The compass gait model consists of two rigid legs connected at a frictionless hip joint. Two point masses are placed at the respective leg's center of mass, while another point mass is placed at the hip.
+The legs do not inclde joints on the knees, so that the legs can be modeled as simple rigid links, which simplifies the model significantly. 
+The feet are idealized as point contacts against the ground. 
+
+As shown in figure \ref{fig:compass_gait}, the model is defined by the following parameters:
+\begin{itemize}
+    \item A point mass $m_H$ at the hip joint,
+    \item Two legs of equal length $l$,
+    \item Two point masses $m_l$ at the center of mass of each leg, located at a distance $d_l$ from the hip.
+\end{itemize}
+The terrain is assumed to be flat and inclined at an angle $\alpha$ with respect to the horizontal plane.
+
+This simplified model eliminates numerous complexities of human walking, such as foot geometry, knee articulation, and three-dimensional balance, focusing instead on the fundamental dynamics of the gait cycle in two dimensions.
+
+The motion of a compass gait walker can be divided into two diverse phases: the so-called stance phase (or swing phase if the opposing leg is considered) and the collision phase, where the swing leg collides with the ground and the stance leg lifts off.
+In the former, the stance leg rotates around the contact point, which is firmly anchored to the ground at all times, while the swing leg freely rotates around the hip joint due to gravitational forces, resembling an inverted double pendulum systme.
+If $\theta_1$ represents the angle of the stance leg with respect to the vertical and $\theta_2$ the angle of the swing leg with respect to the stance leg, the equations of motion for the compass gait model can be again derived using the Lagrangian method:
+
+\begin{equation}\label{eq:compass_gait_eom}
+    M(\theta)\ddot{\theta} + C(\theta, \dot{\theta})\dot{\theta} + G(\theta) = J_{C_1}^T F_{C_1} + J_{C_2}^T F_{C_2},
+\end{equation}
+where:
+
+\begin{itemize}
+    \item $\theta = \begin{bmatrix}
+        \theta_1 & \theta_2
+    \end{bmatrix}^T$ is the vector of generalized coordinates,
+    \item $M(\theta)$ is the mass-inertia matrix,
+    \item $C(\theta, \dot{\theta})$ is the Coriolis and centrifugal matrix,
+    \item $G(\theta)$ is the gravity vector that depends on the slope angle $\alpha$.
+\end{itemize}
+
+Technically, to fully describe the state of the walker, we would include the position of the floating base in the state vector
+$\theta = \begin{bmatrix}
+    x & y & \theta_1 & \theta_2
+\end{bmatrix}^T$, so that the the system can be generalized and extended to more complex models, with a mobile floating base,
+However, for the compass gait model, if we place the floating base at the contact point of the stance leg, the position is fixed and does not change during the stance phase.
+Consequently, the $4\times1$ equation of motion (\ref{eq:compass_gait_eom}) can be reduced to a $2\times1$ equation of motion by eliminating the base position, since the accelerations and velocities of the floating base are zero: $\ddot{x} = \ddot{y} = \dot{x} = \dot{y} = 0$.
+
+There are numerous ways to derive the coefficients of the equations of motion, such as the Newton-Euler method or the Lagrangian method.
+The latter is chosen for its simplicity and elegance, as it allows for a straightforward derivation of the equations of motion by defining the kinetic $\mathcal{T}$ and potential energy $\mathcal{V}$ of the system. 
+Each coefficient is then derived by taking the partial derivatives of the Lagrangian $\mathcal{L} = \mathcal{T} - \mathcal{V}$ with respect to the generalized coordinates and their time derivatives.
+A complete derivation of the equations of motion for the compass gait model is provided in the appendix A. % TODO: Add appendix reference
+
+The foot-strike phase is modeled as an instantaneous collision between the swing leg and the ground.
+At this moment, the roles of the stance leg and the swing leg are exchanged, and an impulsive, perfectly inelastic collision takes place.
+Being perfectly inelastic, the collision conserves angular momentum around the contact point, but energy is dissipated.
+
+Let us start by listing all the assumptions made in the foot-strike phase:
+\begin{enumerate}[label=A\arabic*:]
+    \item The collision is instantaneous, that is $dt \longrightarrow 0$. This means that there doesn't exist a moment in time where two contact points are present.
+    \item The collision is perfectly inelastic, meaning that the kinetic energy is not conserved.
+    \item Coriolis, centrifugal and gravitational effects are negligible in a time $dt$.
+    \item When the swing leg collides with the ground, the impulsive force is only felt at its contact point, not at the stance leg contact point.
+\end{enumerate}
+
+By integrating the equations of motion over the time interval $dt$ during which the collision occurs, we can derive the equations that describe the post-collision state of the system.
+
+\begin{equation}\label{eq:compass_gait_poststate_derivation}
+    \begin{split}
+        \int_{t_-}^{t_+} M(\theta)\ddot{\theta} + C(\theta, \dot{\theta})\dot{\theta} + G(\theta) dt &= \int_{t_-}^{t_+} M(\theta)\ddot{\theta} dt + \int_{t^-}^{t^+} C(\theta, \dot{\theta})\dot{\theta} dt + \int_{t^-}^{t^+} G(\theta) dt\\
+        &\myeq{A3} \int_{t^-}^{t^+} M(\theta)\ddot{\theta} dt\\
+        &= \int_{t^-}^{t^+} J_{C_1}^T F_{C_1} + J_{C_2}^T F_{C_2} dt\\
+        &= \int_{t^-}^{t^+} J_{C_1}^T F_{C_1} dt + \int_{t^-}^{t^+} J_{C_2}^T F_{C_2} dt\\
+        &\myeq{A4} \int_{t^-}^{t^+} J_{C_2}^T F_{C_2} dt\\
+        &= J_{C_2}^T I_{C_2},
+    \end{split}
+\end{equation}
+where $I_{C_2} = \int_{t^-}^{t^+} F_{C_2} dt$ is the impulse experienced by the swing leg at the moment of collision, and the superscripts $-$ and $+$ denote the pre-collision and post-collision states, respectively.
+
+Resolving the equation, we obtain the post-collision state of the system:
+
+\begin{equation}
+    M(\theta^+)\dot{\theta}^+ = M(\theta^-)\dot{\theta}^- + J_{C_2}^T I_{C_2},
+\end{equation}
+where $\theta^+$ and $\theta^-$ represent the post-collision and pre-collision states, respectively.
+
+If we also include the condition of foot-strike after the collision $v_{C_2}^{+} = J_{C_2}\dot{\theta}^+ = 0$, we can write the dynamics of foot-strike in matrix form:
+
+\begin{equation}\label{eq:compass_gait_footstrike_matrix}
+    \begin{bmatrix}
+        M & -J_{C_2}^T\\
+        J_{C_2} & 0
+    \end{bmatrix}
+    \begin{bmatrix}
+        \dot{\theta}^+\\
+        I_{C_2}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        M\dot{\theta}^-\\
+        0
+    \end{bmatrix}
+\end{equation}
+
+Another ingredient for a complete simulation is the analytical definition of the collision event, which is the moment when the legs swap roles.
+For the compass gait model, since the contact is point-like, an appropriate definition could be when the angles between the legs and the vertical to the slope are equal, that is $\theta_1 + 2\theta_2 = 0 \Longrightarrow \theta_1 = -2\theta_2$.
+The signs follow the chosen convention, which defines a positive angle as a counter-clockwise rotation, starting from the vertical axis.
+Following this convention, after foot-strike, the angles are updated as follows:
+
+\begin{equation}
+    \begin{cases}
+        \theta_1^+ &= \theta_1^- + \theta_2^-\\
+        \theta_2^+ &= -\theta_2^-.
+    \end{cases}
+\end{equation}
+
+
+\section{3D passive walker with curved feet}
+\subsection{Introduction}
+Building upon the fundamental compass gait model, one could implement numerous important extensions:
+
+\begin{itemize}
+    \item Kneed Compass Gait: Adding a passive knee joint to each leg introduces additional degrees of freedom that allow for foot clearance during the swing phase, eliminating the "foot scuffing" problem inherent in the straight-legged model.
+    \item Curved Feet: Replacing point feet with curved contact surfaces can enhance stability and reduce energy losses during foot strike, leading to more efficient gaits.
+    \item Actuated Compass Gait: Adding minimal actuation, typically at the hip or ankle, allows the model to overcome energy losses and walk on level ground while preserving the underlying passive dynamics.
+    \item Three-Dimensional Compass Gait: Extending the model to include frontal plane dynamics addresses the lateral stability challenges that are abstracted away in the two-dimensional model.
+    \item Compliant Legs: Incorporating spring elements into the legs can improve energy efficiency and robustness to ground height variations, mimicking the role of tendons and muscles in human locomotion.
+\end{itemize}
+
+The addition of curved feet to the compass gait model, which this section attemps to describe, represents an interesting biomechanically-inspired improvement that tackles several limitations of the point-foot configuration.
+When curved feet replace the idealized point contacts, they introduce a rolling motion during the stance phase that more accurately resembles human locomotion.
+This geometric correction generates a continuously moving center of pressure that smoothly transitions from heel to toe, increasing the walker's stability by expanding the base of support throughout the gait cycle.
+From a dynamics perspective, curved feet transform the traditional instantaneous collision into a more gradual energy transfer process, substantially reducing impact losses at heel strike, which is a major source of inefficiency in point-foot models.
+Part of this thesis also takes care of the identification of the optimal shape and geometry of the curved feet, to maximize the stability and efficiency of the walker.
+In contrast to the previous model, we also expect the dimensionality of the state space to increase, as the position of the curved feet must be tracked in addition to the generalized coordinates of the legs.
+
+\subsection{Effective changes from the compass gait model}
+The primary change introduced by the addition of curved feet to the compass gait model is the transition of the system from a bi-dimensional to a tri-dimensional system.
+In fact, the curvature of the feet allows the walker to move in all directions in $\mathbb{R}^3$, as opposed to the compass gait model. 
+The idea of the passive walker is to exploit the sideways rocking motion to give space to the swing leg to %%%
+To simplify the analysis of the dynamics while preserving its functionality, it can turn out to be useful to divide the motion into two separate planes: the frontal plane, which sees the robot from the front or back, and the sagittal plane, which sees the it from the side.
+If we choose our reference system to be inertial to the inclined slope and to have the x-axis pointing down the slope, the z-axis to point along the normal to the slope and the y-axis to be perpendicular to the other two, the frontal plane will be the xz-plane, while the sagittal plane will be the yz-plane.
+
+Another substantial change is the introduction of additional constraints to the model.
+While the compass gait model is obliged to keep the stance foot anchored to the ground at all times during its motion, the curved foot undergoes a rolling motion, as it is designed to be a section of a sphere centered at the hip joint.
+The immediate result is that the contact point position is no longer fixed, but it moves along the foot surface as the leg rotates around the hip joint.
+
+Clearly there is a change in the foot-strike event, which we can assume to still be instantaneous, but it is no longer a point-like collision.
+Because the collision is no longer point-like, the definition of the contact point position is no longer as trivial as the one in the compass gait model, where the contact point was the same as the foot position.
+In contrast, one has to derive the contact point position as a function of the generalized coordinates of the system.
+
+\subsection{Rolling Contact Jacobian}
+The notion of contact Jacobian has been introduced in section \ref{ssec_multibody_lagrangian}, where it has been stated that it could be calculated starting from the Jacobian of a generic link frame L experiencing the contact and remapped to the contact point through an appropriate transformation matrix:
+
+\begin{equation}
+    \leftsuperscript{C_i}{J}{W,L/X}(q) = \leftsuperscript{C_i}{X}{L}\leftsuperscript{L}{J}{W,L/X}(q).
+\end{equation}
+
+Equation \ref{eq:contact_wrench_projection} explains that, considering a generic link L experiencing a contact force in the frame $C_i$, in general:
+
+\begin{equation}
+    \leftsuperscript{C_i}{J}{W, L/X}(q) \neq \leftsuperscript{C_i}{J}{W,C_i/X}(q).
+\end{equation}
+
+What is usually done is to calculate the Jacobian of the link's reference frame and shifting it to the point of contact through the previously mentioned  velocity transformation $X$.
+
+
+\subsection{3D model setup}
+This passive walker functions in the following way: when given a small sideways push, the walker begins to stand on one leg and to sway from side to side, allowing the other leg to swing forward down the ramp.
+As the swinging leg reaches the ground, the walker transfers its weight to the other leg, which then becomes the stance leg, and the cycle repeats.
+As mentioned in the section that explained the physics behind a passive walker, the motion is due to the conversion of potential energy into kinetic energy, which is in turn dissipated by the collision with the ground.
+
+Let's implement the separation of the dynamics of the system into two planar dynamics, as described a few lines above.
+The frontal plane captures the side-to-side rocking motion of the robot. The behaviour in this plane is similar to the one of an inverted pendulim, where the center of mass sways from side to side.
+The sagittal plane, on the other hand, captures the forward-backward motion of the robot.
+The stance leg resembles an inverted pendulum motion which can be described by the differential equation:
+
+\[
+\ddot{\theta} = -\frac{g}{l}\sin(\theta),
+\]
+where $l$ is the length of the leg, $g$ is the acceleration due to gravity and $\theta$ is the angle of the leg with respect to the vertical.
+
+The swing leg behaviour, however, could be described by an equation of the form:
+
+\[
+\ddot{\theta_{sw}} = \frac{g}{l}\sin(\theta_{sw}) - \frac{m_{sw}}{m_{total}}\ddot{x_H},
+\]
+
+since it resembles a pendulum with an additional term that accounts for the horizontal acceleration of the hip, where it is attached to.
+
+The real motion follows the equations that describe a floating base, multi-body system, which in the frontal plane are:
+
+\begin{equation}\label{eq:frontal_plane_eom}
+    H(\theta)\ddot{\theta} + C(\theta, \dot{\theta})\dot{\theta} + G(\theta) = 0,
+\end{equation}
+
+with $\theta$ being the body-angle, which is a scalar.
+The right-hand side of the equation is zero, because %TODO: Add explanation
+
+In the sagittal plane, the dynamics are described by two state variables, one angle for the stance leg and one for the swing leg:
+
+\begin{equation}\label{eq:sagittal_plane_eom}
+    H(\vec{\theta})\ddot{\vec{\theta}} + C(\vec{\theta}, \dot{\vec{\theta}})\dot{\vec{\theta}} + G(\vec{\theta}) = 0,
+\end{equation}
+with $\vec{\theta} = \begin{bmatrix}
+    \theta_1 & \theta_2
+\end{bmatrix}^T$,
+and $\theta_1$ and $\theta_2$ being the angles of the stance leg and the vertical, and the inter-leg angle, respectively.
+We will keep this notation of $\theta$ and $\vec{\theta}$ for the rest of the section of the passive walker with curved feet.
+The calculation of the coefficients of the equations of motion are reported in the appendix A. %TODO: Add appendix reference$
+
+The foot-strike event cannot be treated the same way as in the compass gait model, because a whole section of a sphere is in contact with the ground, not just a point.
+Again, the contact point position is no longer fixed, but it moves along the foot surface as the leg rotates around the hip joint.
+In fact, the definition of collision event from the compass gait mode,  which we recall being $\theta_1 + 2\theta_2 = 0$, is no longer valid, because multiple instances in time will satisfy the equation.
+To tackle this problem, we can make the two planes interact with each other, by defining the collision event as the moment when the body angle in the frontal plane is null, that is $\theta = 0$.
+At this point, there is a clear transfer of weight from one leg to the other, and the roles of the two legs are swapped.
+
+Starting from the assumption that the collision is perfectly inelastic:
+
+\begin{equation}\label{eq:footstrike}
+    M(\vec{\theta}^+)\dot{\vec{\theta}}^+ = M(\vec{\theta}^-)\dot{\vec{\theta}}^- + J_{C_2}^T I_{C_2},
+\end{equation}
+while the post-collision angles are updated as follows:
+
+\begin{equation}
+    \begin{cases}
+        \theta_1^+ &= \theta_1^- + \theta_2^-\\
+        \theta_2^+ &= -\theta_2^-.
+    \end{cases}
+\end{equation}
+
+% Foot section after model setup enables the description of the constraints of the parameters, together with the definitions
+\subsection{Foot design}
+The geometry and design of the curved feet to be attached below the legs of the walker are crucial to the performance and stability of the system.
+The most generic shape that can be used is a section of an ellipsoid, which is defined by the equation:
+
+\begin{equation}\label{eq:ellipsoid}
+    \frac{x^2}{a^2} + \frac{y^2}{b^2} + \frac{z^2}{c^2} = 1,
+\end{equation}
+where $a$, $b$ and $c$ are the semi-axes of the ellipsoid.
+
+
+
+
+\chapter{Simulation tools}
+\section{Environment description}
+
+
+\chapter{}
