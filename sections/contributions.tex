@@ -159,7 +159,29 @@ Equation \ref{eq:contact_wrench_projection} explains that, considering a generic
     \leftsuperscript{C_i}{J}{W, L/X}(q) \neq \leftsuperscript{C_i}{J}{W,C_i/X}(q).
 \end{equation}
 
-What is usually done is to calculate the Jacobian of the link's reference frame and shifting it to the point of contact through the previously mentioned  velocity transformation $X$.
+What is usually done is to calculate the Jacobian of the link's reference frame and shifting it to the point of contact through the previously mentioned velocity transformation $X$, where
+
+\[
+\leftsuperscript{C}{X}{L} = 
+\begin{bmatrix}
+    \leftsuperscript{C}{R}{L} & \leftsuperscript{C}{o}{L}^{\wedge}\leftsuperscript{C}{R}{L}\\
+    0_{3\times3} & \leftsuperscript{C}{R}{L}
+\end{bmatrix},
+\]
+which simplifies to
+
+\begin{equation}
+    \leftsuperscript{C}{X}{L} =
+    \begin{bmatrix}
+        R_{\gamma} & \leftsuperscript{C}{o}{L}^{\wedge}R_\gamma\\
+        0_{3\times3} & R_{\gamma}
+    \end{bmatrix},
+\end{equation}
+where $R_{\gamma}$ 
+
+Instead of defining the dynamics of each leg, we decided to define the dynamics of a `stance' leg and a `swing' leg.
+Therefore, only one contact Jacobian requires definition, instead of two jacobians (one per leg), and a selection matrix used to select the correct contact Jacobian.
+
 
 
 \subsection{3D model setup}
@@ -238,9 +260,272 @@ where $a$, $b$ and $c$ are the semi-axes of the ellipsoid.
 
 
 
+\chapter{Simulation environment}
+% TODO: Write simulation environment
+- Simulators
+- Add mesh support
+- Mesh wrapping algorithms
+- Contact models
+- Optimization libraries and techniques
 
-\chapter{Simulation tools}
-\section{Environment description}
 
 
-\chapter{}
+\chapter{Optimization loop}
+Once the fundamental design decisions for the passive walker were taken, identifying the optimal configuration of free hardware parameters became an essential task for achieving stable locomotion.
+This optimization process represents an important link between theoretical modeling and practical implementation, transforming a conceptual mechanical system into a possibly functional, walking device.
+
+\section{Identification of free parameters}
+The first step for the implementation of an effective optimization loop is the accurate identification of the free physical parameters, whose definition has the most significant impact on the walker's dynamics, together with the chosen initial state.
+These parameters include:
+
+\begin{itemize}
+    \item Mass distribution parameters (hip mass $m_H$, leg masses $m_l$, foot masses $m_f$),
+    \item Geometric parameters:
+    \begin{itemize}
+        \item Leg length: $l$,
+        \item Hips offset from `hip' point mass (where legs start): $a$,
+        \item Distance of the leg CoM from the hip: $d_l$,
+        \item Distance of the foot CoM from the ankle: $[d_{f,y}, d_{f,z}]$,
+        \item Curvature of the foot in sagittal and frontal planes: $R_s, R_f$,
+        \item Slope angle: $\alpha$,
+    \end{itemize}
+    \item Environment variables:
+    \begin{itemize}
+        \item Acceleration due to gravity: $g$,
+        \item Slope angle: $\gamma$.
+    \end{itemize}
+\end{itemize}
+
+Then, each parameter is assigned a domain of possible values, within reasonable physical constraints, which is used to generate a set of initial guesses for the optimization algorithm. 
+The definition of these domains creates a multi-dimensional search space, where each point represents a possible configuration of the walker, which is space to be explored by the optimization algorithm.
+The importance of defining a proper domain for each parameter cannot be underestimated, as this task impacts the functionality of the walker, it directly influences the convergence of the optimization process and defines the actual physical geometry of the robot.
+Apart from the obvious confinements on the sign, cosidering the most crucial parameter to be the curvatures of the foot, we can define a few constraints on these parameters:
+
+\begin{itemize}
+    \item The leg length should be smaller than the radii of the feet.
+    \item The distance $d_l$ should be smaller than the leg length.
+    \item The distance $d_{f,z}$ must be smaller than the quantities $R_f - l$ and $R_s - l$.
+    % TODO: Explore more constraints
+\end{itemize}
+
+\section{Definition of the objective function and early stopping criteria}
+The formulation of an appropriate objective function represented perhaps the most crucial aspect of an optimization process. 
+This mathematical function must cover multiple goals, while providing meaningful feedback to guide the optimization algorithm towards the desired solution.
+Therefore, the development of this function requires careful consideration of both theoretical and practical aspects of the walker's behavior.
+
+In this section, we study a few possible objective functions that could be used to optimize the walker's physical parameters.
+Each metric addresses a different aspect of the walker's performance, such as energy efficiency, gait stability or other relevant characteristics.
+It is important to note that the choice of the objective function is not unique, and that the final function will probably be a superposition of multiple terms, each representing a different aspect of the walker's performance, and each weighted differently to reflect the relative importance of each aspect.
+
+\subsection{Energy recycling factor}
+To specifically encourage configurations that preserve mechanical energy at impact events during the gait cycle, an energy recycling factor could be defined as:
+
+\begin{equation}\label{eq:opt_energy_efficiency}
+    f_{\text{recycle}}(\vec{\theta}) = \frac{E^-(\vec{\theta})}{E^+(\vec{\theta})},
+\end{equation}
+where $E^-$ and $E^+$ are the total mechanical energies of the system before and after the collision, respectively.
+This function is designed to reward configurations that minimize energy losses during foot-strike events, which are a major source of inefficiency in bipedal walking.
+
+\subsection{Poincarè return map analysis}
+The Poincarè return map is a powerful tool for analyzing the stability of periodic orbits in dynamical systems.
+In this context, it represent a valuable component of the objective function, as it addresses the fundamental requirement of dynamic stability in bipedal walking.
+This method analysis the walker's dynamics through the evaluation of the eigenvalues of the linearized Poincarè return map P.
+For a given configuration $\vec{\theta}$, the map is constructed as:
+
+\begin{equation}\label{eq:opt_poincare_map}
+    P(\vec{\theta}): \mathcal{S} \longrightarrow \mathcal{S},
+\end{equation}
+where $\mathcal{S}$ represents the section in state space corresponding to foot-strike events.
+The stability criterion requires that all eigenvalues of the Jacobian $DP(x^*)$ have a magnitude less than one, where $x^*$ is the fixed point of the map. 
+In other words, the eigenvalues must lie within the unit circle in the complex plane.
+
+\begin{equation}\label{eq:opt_stability}
+    f_{\text{stability}}(\theta) =
+    \begin{cases}
+        \max_i|\lambda_i(DP(x^*))| & \text{if } \max_i|\lambda_i| < 1\\
+        \exp(c \cdot (\max_i|\lambda_i| - 1)) & \text{otherwise}
+    \end{cases},
+\end{equation}
+where $c$ is a scaling constant that penalizes unstable configurations
+
+
+\subsection{Forward progression rate}
+To avoid solutions that lead to a stationary walker, or favoured small steps, the forward progression rate was defined as:
+
+\begin{equation}\label{eq:opt_forward_progression}
+    f_{\text{progress}}(\vec{\theta}) = \frac{d_{\text{forward}}}{t_{\text{step}}},
+\end{equation}
+where $d_{\text{forward}}$ is the distance covered by the walker in the forward direction during a single step, and $t_{\text{step}}$ is the time taken to complete that step.
+Again, this function is designed to encourage configurations that maximize the forward progression rate, which is a key performance metric for bipedal walking.
+
+\subsection{Direct trajectory tracking}
+To ensure that the walker is penalized from deviating from a desired trajectory, one could define a bunch of mathematical functions that measure the distance between the actual trajectory of the walker and the desired one, along each axis.
+Considering a score maximization problem, for example, if we keep the convention that the x-axis is the forward direction, the y-axis is the lateral direction and the z-axis is the vertical direction, we could define the following functions:
+
+\begin{equation}
+    \begin{split}
+        s_z &= m_z e^{\frac{-(z - z_0)^2}{a}}\\
+        s_x &= m_x \big( x - x_0 \big)^{2b}.
+    \end{split}
+\end{equation}
+
+This definition rewards a higher score if the walker remains close to its initial value of $z$ (vertical) throughout the gait cyclle, meaning it should not fall down, while rewards a higher score if it moves forward in the x-direction (forward), penalizing stationarity, according to a power law.
+Each function can be tuned through parameters, such as the multipliers to scale the score, the exponent of the power law and the width of the gaussian function.
+The final score is the sum of all the scores, each weighted by a coefficient that reflects the importance of each axis, where the sum of the coefficients is equal to one.
+
+\subsection{Final objective function}
+The idea for the most complete objective function for the optimization task is to combite some individual components described above, into a weighted sum:
+
+\begin{equation}\label{eq:opt_final_objective}
+    f(\vec{\theta}) = w_{\text{recycle}} f_{\text{recycle}}(\vec{\theta}) + w_{\text{stability}} f_{\text{stability}}(\vec{\theta}) + w_{\text{progress}} f_{\text{progress}}(\vec{\theta})
+\end{equation}
+
+The weights $w_i$ could themselves be subject to a meta-optimization process, where different weighting schemes are calculated based on the performance of the resulting walkers.
+During the implementation of such function, some components were transformed to ensure comparable scales.
+For instance, exponential transformations were applied to highly nonlinear metrics, and soft thresholding functions were used to handle constraints without introducing discontinuities.
+
+\subsection{Early termination heuristics}
+In the context of computational optimization, determining when to terminate the search process represents an important balance between solution accuracy and computational efficiency.
+Since the physical parameters search space is high-dimensional, an optimization algorithm may take a long time to identify a solution. 
+In addition, this search space is often characterized by multiple local minima, narrow regions of stability and complex non-linear interactions.
+For this reason, developing a valid stopping criteria becomes an essential step.
+
+The hybrid nature of the system, which combines continuous dynamics during the swing phase with discrete impacts at foot-strike instants, creates a parameter space where minor changes may have large effects on walking stability.
+As a consequence, optimization algorithms may require thousands of iterations to converge, with less returns in performance improvement after certain thresholds are reached.
+Early stopping criteria provide an important tool for terminating the optimization process when further computational investment is unlikely to yield significant improvements.
+These criteria must balance different objectives: they should allow enough exploration of the search space to find valid solutions and prevent early convergences to suboptimal parameters.
+
+The most basic approach would clearly be to stop the process after a fixed number of iterations, but this approach cannot be considered optimal, as it does not take into account the convergence of the algorithm.
+A more sophisticated approach would be to stop the optimization process when the improvement in the objective function falls below a certain threshold, or when the algorithm has not improved the best solution for a certain number of iterations.
+As this approach may help to prevent the algorithm from getting stuck in local minima, it is not guaranteed to find the global optimum, therefore it cannot fuction on its own.
+While there are infinite ways to define a condition to terminate the algorithm prematurely, our work implements a stopping criteria which is only based on the behaviour of the walker during the simulation.
+
+\begin{enumerate}
+    \item Height Threshold Violation: The simulation was terminated when the walker's base link fell below a predefined z-threshold height.
+    This condition effectively captured falling states where the walker collapsed toward the ground. 
+    By monitoring the vertical position of the base link relative to the walking surface, we could immediately identify configurations that failed to maintain an upright posture, which is an essential requirement for successful locomotion.
+    \item Minimum Velocity Threshold: The second criterion monitored the base link's forward velocity, terminating simulations when this velocity dropped below a specified threshold after a certain time period had elapsed. 
+    This captured scenarios where the walker might remain upright but failed to generate sufficient momentum to continue progression, effectively `stalling' rather than achieving continuous walking.
+\end{enumerate}
+
+Mathematically speaking:
+\[
+    z_H < \tilde{z},\quad \text{or}\quad ()\vv_z < \tilde{v}_z ;, \text{and};, t > \tilde{t},
+\]
+where $\tilde{z}$ is the threshold on the height, $\tilde{v}$ is the threshold on the velocity and $\tilde{t}$ for the time, both chosen in advance by trial-and-error.
+The timing element of the velocity criterion proved particularly important, as it allowed for the natural acceleration phase of walking to occur before applying the threshold test.
+Initial movements during the first few steps often exhibited low velocities that would have triggered false terminations if evaluated too early in the simulation.
+Despite its simplicity and effectiveness, we still labeled this mixture of criterion to be not adequate.
+
+\section{Genetic algorithm architecture and parameter sweeps}
+To navigate the challenging parameter space presented by the parameters that describe the passive walker, we implemented a genetic algorithm (GA) approach. 
+As mentioned in section \ref{sec:genetic_algorithms}, genetic algorithms draw inspiration from natural selection and evolutionary processes to solve complicated optimization problems.
+Unlike gradient-based methods that require continuous, differentiable functions, GAs work through mechanisms of selection, crossover, and mutation to evolve increasingly effective solutions across generations.
+
+\subsection{Chromosome representation}
+Each candidate solution was encoded as a chromosome representing the complete set of free parameters governing the walker's physical properties.
+Each chromosome was a vector of real-valued numbers, where each element represented a specific parameter within the defined domain.
+The length of the chromosome was equal to the total number of free parameters, and each element was initialized randomly within the parameter's domain.
+A validation layer was created to ensure that the generated chromosomes respected the constraints imposed by the walker's physical properties.
+Finally, a candidate solution was decoded from the chromosome by mapping each element to its corresponding parameter.
+A solution took the form:
+
+\[
+    \pi = 
+    \begin{pmatrix}
+        m_H & m_l & m_f & l & a & d_l & d_{f,y} & d_{f,z} & R_s & R_f
+    \end{pmatrix}
+\]
+
+The environment variables such as the gravity vector and the slope angle were kept constant during the optimization process, as they were considered external factors that were not subject to optimization.
+However, the slope angle could be included in a second layer of optimization to allow for the exploration of different walking scenarios on various inclines, but this idea goes beyond the scope of this thesis.
+
+\subsection{Fitness evaluation pipeline}
+The core of our architecture consisted of a multi-stage evaluation pipeline:
+
+\begin{enumerate}
+    \item Parameter decoding: Chromosomes were translated into concrete physical parameters for the walker model, ensuring all physical constraints were satisfied.
+    \item Dynamic Simulation: Each parameter set underwent full dynamic simulation using a specific physics engine to evaluate the walker's performance. 
+    The walker required the calcultion of an accurate initial position, which changed at each iteration because of the different parameters.
+    The main values impacting the initial position were the leg length and the curvatures of the feet. 
+    The quality of each simulation was decided by the objective functions and the early stopping conditions.
+    \item Early Termination Detection: Simulations were monitored for failure conditions, specifically whether the walker's base link fell below a critical height threshold or if forward velocity dropped below a minimum threshold after an initial startup period.
+    These criteria enabled efficient selection of clearly unsuccessful configurations. Candidates failing these conditions were not immidiately eliminated, because the algorithm wasn't expected to find a fixed point in the search space straight away.
+    The stopping condition simply halted the simulation which would simply return a lower score compared to a better solution, which allowed the robot to walk for a longer period of time.
+    \item Fitness Computation: The chosen metrics were combined into a scalar fitness value through a weighted objective function that balanced the multiple goals of stable, efficient, and robust walking.
+\end{enumerate}
+
+\subsection{Evolutionary operators}
+The genetic algorithm operated through three primary mechanisms:
+
+\subsubsection*{Selection}
+The selection mechanism determines which individuals from the current population will contribute their genetic material to the next generation.
+However, despite decades of research, there is no general guidelines or theoretical support concerning the way of picking the best selection method for each problem.
+This can be a serious problem because, as we will see through numerical results, a non-suitable selection operator can lead to poor performance of the GA in terms of both rapidity and reliability.\cite{Jebari2013}
+
+\begin{itemize}
+    \item \textbf{K-tournament selection [Implemented]}: In this approach, K individuals are randomly selected from the population, and the one with the highest fitness becomes a parent.
+    This process is repeated until the required number of parents is obtained.
+    The K parameter in tournament selection creates a fundamental tradeoff between selection pressure and population diversity that significantly impacts genetic algorithm performance.
+    Typically, with smaller values of K, selection pressure stays relatively low. It then maintains high genetic diversity, explores the parameter space more broadly, but risks slow convergence to optimal solutions.
+    With higher values of K, there is stronger selection pressure as the probability of including top-performing individuals in each tournament increases.
+    This approach accelerates convergence towards promising regions, aggressively exploiting the search space, at the cost of reduced genetic diversity and increased risk of premature convergence to local optima.
+    With the chosen value of K=5, the selection pressure should still be moderate, providing a good balance between exploration and exploitation.
+
+    Mathematically, the selection pressure could be quantified by examining the probability that the best individual will be selected in any given tournament:
+
+    \begin{equation}
+        P(\pi_{best}) = 1 - \Big(\frac{N - 1}{N}\Big)^K,
+    \end{equation}
+    where $N$ is the population size. As K increases, this probability approaches 1, increasing exploitation at the expense of exploration.
+
+    \item \textbf{Roulette-wheel selection}: This approach assigns selection probability proportional to fitness.
+    While intuitive, roulette wheel selection can suffer from premature convergence when fitness values vary widely, as dominant individuals can quickly take over the population.
+    For passive walker optimization, where an individual might have significantly better performance than the others, this may lead to reduced diversity too early in the process.
+
+    \item \textbf{Rank-based selection}: By making a selection based on fitness values rather than absolute values, this method provides more uniform selection pressure regardless of fitness distribution.
+    For the optimization of passive walker parameters, where the objective function might have irregular scaling across different areas of the parameter space, rank-based selection would maintain more consistent selection pressure but might not emphasize exceptionally good solutions sufficiently.
+\end{itemize}
+
+\subsection{Crossover}
+Crossover combines genetic material from parents to create offspring, allowing beneficial traits to be combined.
+It is a way to stochastically generate new solutions from an existing population.
+It is more likely that the new offspring would contain good parts of their parents, and consequently perform better as compared to their ancestors.\cite{Ahmad2018}
+The following crossover operators were considered:
+
+\begin{itemize}
+    \item \textbf{Two-Point Crossover [Implemented]}
+    This operator selects two random points along the chromosome and exchanges the segment between these points across the parents.
+    
+    \item \textbf{Uniform Crossover}:
+    Uniform crossover decides independently for each gene which parent contributes it to the offspring.
+    This would create more mixing of parameters, potentially disrupting physical relationships between related parameters but allowing for more granular recombination of traits.
+    For passive walker optimization, this might be less effective when parameters have strong interdependencies.
+
+    \item \textbf{Simulated Binary Crossover (SBX)}:
+    This operator, designed specifically for real-valued optimization, produces offspring that are near their parents in parameter space with higher probability than offspring that are far away.
+    This property would be particularly valuable for passive walker optimization, where small coordinated changes to multiple parameters often yield better results than large random variations.
+    Ideally, a future work on this model could attempt to implement an evolutionary algorithm with this crossover operator.
+\end{itemize}
+
+
+\subsection{Mutation}
+Mutation introduces variability into the population, allowing exploration of new regions in the parameter space.
+It is a crucial operator in maintaining genetic diversity and preventing premature convergence to local optima.
+The following mutation operators were considered:
+
+\begin{itemize}
+    \item \textbf{Random mutation [Implemented]}:
+    In this approach, selected genes are replaced with random values within their allowed ranges.
+    This provides unrestricted exploration capability but doesn't account for parameter sensitivities or the current state of the search.
+    This method has been chosen for its simplicity and effectiveness in maintaining genetic diversity.
+    However, a more complex optimization process could integrate a more sophisticated mutation operator to have more control on the convergence of the algorithm.
+    A good example is the Gaussian Mutation operator, explained in the next lines.
+
+    \item \textbf{Gaussian mutation}:
+    This approach adds Gaussian noise to parameter values, with the magnitude of the noise typically decreasing over generations.
+    For passive walker parameters, where small refinements become increasingly important near optimal configurations, Gaussian mutation with adaptive step size would allow more controlled exploration. 
+\end{itemize}
+
+\section{Parameter sweeps}
+
