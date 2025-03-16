@@ -1,5 +1,14 @@
 \chapter{iCub humanoid robot}
-
+The iCub humanoid robot features a total of 53 degrees of freedom (DOF) distributed throughout its body. 
+Specifically, each leg possesses 6 DOFs, the torso contains 3 DOFs, the head and eyes system incorporates 6 DOFs, each arm utilizes 7 DOFs, and each hand employs 9 DOFs. Additionally, a dedicated servo motor controls the opening and closing of the robot's eyelids.
+This sophisticated mechanical design places the iCub among the most advanced humanoid platforms in robotics research today.
+Developed by the Italian Institute of Technology (IIT) through the European Commission's RobotCub project, the iCub was conceived with a specific vision: to create an open-source humanoid platform that could serve as a common tool for researchers investigating embodied cognition, developmental robotics, and human-robot interaction. Standing approximately 104 centimeters tall, the iCub's size and proportions intentionally mimic those of a 3-4 year old child, reflecting its conceptual roots in developmental psychology and cognitive science.
+The name iCub itself reveals this inspiration, with "Cub" referencing its childlike form and capabilities, while the preceding "i" acknowledges both its Italian origins and its place in modern technological innovation. This etymological foundation underscores the robot's purpose as a platform for exploring how intelligence emerges through physical interaction with the environment—a cornerstone principle of embodied cognition.
+Beyond its mechanical complexity, the iCub incorporates an impressive array of sensory systems. Stereo vision is enabled through cameras positioned in the robot's eyes, providing depth perception and visual processing capabilities. Tactile sensing is distributed across the body, with particularly dense sensor arrays in the fingertips and palms, allowing for sophisticated manipulation and object recognition. Additional proprioceptive sensors monitor joint positions and forces, while auditory inputs enable sound localization and voice recognition.
+The iCub's cognitive architecture is built upon YARP (Yet Another Robot Platform), an open-source middleware that facilitates modular software development and hardware abstraction. This foundation supports a growing ecosystem of software components addressing everything from low-level motor control to high-level cognitive functions like attention, memory, and learning.
+What distinguishes the iCub from many other humanoid platforms is its developmental approach to artificial intelligence. Rather than programming fixed behaviors, researchers using the iCub often implement learning algorithms that allow the robot to acquire skills through exploration and interaction—mirroring the developmental trajectory of human children. This approach has led to demonstrations of capabilities ranging from object manipulation and tool use to rudimentary forms of social interaction and language acquisition.
+The open-source nature of both the iCub's hardware designs and software has fostered a vibrant international research community. Since its initial release in 2008, more than 40 iCub units have been deployed to laboratories across Europe, Asia, and North America. This distribution has enabled collaborative research efforts addressing fundamental questions in cognitive science, neuroscience, and artificial intelligence.
+As robotics and AI continue to advance, the iCub remains at the forefront of research investigating how embodied, developmental approaches might lead to more robust and adaptable intelligent systems. Its comprehensive design, combining sophisticated mechanics with advanced sensing and cognitive capabilities, provides a unique platform for exploring the complex interplay between physical form, sensorimotor experience, and the emergence of intelligence.
 
 \chapter{Introduction to rigid multibody dynamics}
 Intro here
@@ -943,6 +952,7 @@ Some algorithms of this type include:
 \end{itemize}
 
 \section{Genetic Algorithms: Principles and Applications}
+\label{sec:genetic_algorithms}
 \subsection{Fundamental Concepts of Genetic Algorithms}
 Genetic algorithms (GAs), introduced by Holland (1975) and popularized by Goldberg (1989), represent a class of evolutionary computational methods inspired by natural selection.
 They operate on a population of candidate solutions (individuals), applying various selection, crossover, and mutation operators to evolve increasingly fit individuals over successive generations.
